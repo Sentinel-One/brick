@@ -1,0 +1,3 @@
+uefi-firmware
+edk2-pytool-extensions
+colorama
