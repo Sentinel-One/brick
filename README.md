@@ -9,7 +9,7 @@ brick is a small tool designed to identify potentially vulnerable SMM modules in
 
 ## Installation
 * Clone this repository:  
-`git clone --recursive https://github.com/assafcarlsbad/brick.git`
+`git clone --recursive https://github.com/Sentinel-One/brick.git`
 * Install necessary requirements:  
 `pip install -r requirements.txt`
 * Install [Bip](https://github.com/synacktiv/bip)
