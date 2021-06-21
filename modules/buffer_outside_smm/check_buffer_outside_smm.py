@@ -43,7 +43,12 @@ class SmmBufferValidModule(BaseModule):
     def references_ami_smm_buffer_validation_protocol(self):
         # Some SMM modules use the AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID protocol instead of calling
         # SmmIsBufferOutsideSmmValid directly.
-        return bip_utils.search_guid(self.AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID)
+        found = bip_utils.search_guid(self.AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID)
+        if found:
+            # This protocol is not recognized by efiXplorer, so must rename it manually.
+            elt = BipElt(found.ea)
+            elt.name = "AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID"
+        return found
 
     def _run(self):
 
