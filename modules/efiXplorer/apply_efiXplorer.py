@@ -13,7 +13,7 @@ from bip.base import *
 EFI_SMM_HANDLER_ENTRY_POINT = BipType.from_c("""EFI_STATUS (f)(
     EFI_HANDLE DispatchHandle,
     void * Context,
-    void * CommBuffer,
+    EFI_SMM_SW_CONTEXT * CommBuffer,
     UINTN * CommBufferSize)""")
 
 class EfiXplorerModule(BaseModule):
