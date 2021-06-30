@@ -1,5 +1,6 @@
 import uuid
 from bip.base import *
+from alleycat import AlleyCat
 
 def search_bytes(byt, min_ea=None, max_ea=None):
     if min_ea is None: min_ea = BipIdb.min_ea()
@@ -20,6 +21,17 @@ def get_wstring(ea):
     size = unicode_null.ea - ea
     wstr = BipData.get_bytes(ea, size).replace(b'\x00', b'')
     return wstr
+
+def has_path(a, b):
+    # Returns True iff there is a path between the two nodes.
+    if hasattr(a, 'ea'):
+        a = a.ea
+
+    if hasattr(b, 'ea'):
+        b = b.ea
+
+    # Paths are symmetric.
+    return AlleyCat(a, b).paths + AlleyCat(b, a).paths
 
 def is_int_constant(cstr):
     for suffix in ('ui64', 'i64'):
