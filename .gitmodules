@@ -1,6 +1,6 @@
 [submodule "idahunt"]
 	path = idahunt
 	url = https://github.com/nccgroup/idahunt
-[submodule "edk2"]
-	path = edk2
+[submodule "modules/reference_code/edk2"]
+	path = modules/reference_code/edk2
 	url = https://github.com/tianocore/edk2
