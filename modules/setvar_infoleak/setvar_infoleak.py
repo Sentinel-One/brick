@@ -1,20 +1,11 @@
-import pathlib
-import sys
-
-parent = pathlib.Path(__file__).resolve().parents[1]
-sys.path.append(str(parent))
 from base_module import BaseModule
 
-import uuid
-import pathlib
-import sys
-import pathlib
-from contextlib import closing
-import bip_utils
-import functools
+import brick_utils
 
 from bip.base import *
 from bip.hexrays import *
+from ida_kernwin import idaplace_t
+from idaapi import idaapi_Cvar
 
 g_get_variable_calls = []
 g_set_variable_calls = []
@@ -22,10 +13,32 @@ g_set_variable_calls = []
 # A dictionary that maps a variable name to a list of functions that called GetVariable() on it.
 g_bookkeeping = {}
 
-class SetVarInfoLeak(BaseModule):
+class SetVarInfoLeakModule(BaseModule):
 
+    SET_VARIABLE_PROTOTYPE = """EFI_STATUS
+        (__fastcall *) (
+            CHAR16 *VariableName,
+            EFI_GUID *VendorGuid,
+            UINT32 Attributes,
+            UINTN DataSize,
+            void * Data
+        )"""
+    
     def __init__(self) -> None:
         super().__init__()
+
+    def fix_set_variable_prototype(self):
+        
+        def _callback(cnode):
+            if '->SetVariable' in cnode.cstr or '->SmmSetVariable' in cnode.cstr:
+                brick_utils.set_indirect_call_type(cnode.ea, self.SET_VARIABLE_PROTOTYPE)
+
+        for func in BipFunction.iter_all():
+            try:
+                hxf = HxCFunc.from_addr(func.ea)
+                hxf.visit_cnode_filterlist(_callback, [CNodeExprCall])
+            except Exception as e:
+                self.logger.debug(e, exc_info=True)
 
     @staticmethod
     def get_variable_name(node):
@@ -35,7 +48,7 @@ class SetVarInfoLeak(BaseModule):
         except AttributeError:
             # Works if the node is a pointer to a constant string.
             try:
-                return bip_utils.get_wstring(node.ignore_cast.value)
+                return brick_utils.get_wstring(node.ignore_cast.value)
             except:
                 # Fallback, probably an expression such as &VariableName.
                 return node.cstr
@@ -44,10 +57,10 @@ class SetVarInfoLeak(BaseModule):
     def collect_GetSetVariable_calls():
 
         def callback(cn):
-            if "->GetVariable" in cn.cstr:
+            if "->GetVariable" in cn.cstr or '->SmmGetVariable' in cn.cstr:
                 g_get_variable_calls.append(cn)
 
-            if "->SetVariable" in cn.cstr:
+            if "->SetVariable" in cn.cstr or '->SmmSetVariable' in cn.cstr:
                 g_set_variable_calls.append(cn)
 
         for func in BipFunction.iter_all():
@@ -84,14 +97,12 @@ class SetVarInfoLeak(BaseModule):
             # If we got here, the function that sets the variable is the same as the function that reads it.
             # Now, we have to make sure the size argument passed to SetVariable is a constant integer greater than zero.
             varsize = call.get_arg(3)
-            if bip_utils.is_int_constant(varsize.cstr) and (varsize.value != 0):
+
+            if isinstance(varsize, CNodeExprNum) and (varsize.value != 0):
                 self.logger.warning(f'Variable {varname} is read by function 0x{func_ea:x} and then written again using constant size 0x{varsize.value:x}')
 
-    def _run(self):
+    def run(self):
+        self.fix_set_variable_prototype()
         self.collect_GetSetVariable_calls()
         self.process_GetVariable_calls()
         self.process_SetVariable_calls()
-
-with closing(SetVarInfoLeak()) as module:
-    module.run()
-    

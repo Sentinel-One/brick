@@ -8,8 +8,8 @@ import shutil
 from guids_db import GuidsDatabase
 from hunter import Hunter
 import glob
-from logger import BrickFormatter, log_step, log_operation, log_timing, log_warning
-from edk2toollib.uefi.edk2.guid_list import GuidList
+from logger import log_step, log_operation, log_timing, log_warning
+from modules import AVAILABLE_MODULE_NAMES, MODULE_DESCRIPTIONS
 
 GUIDS_FILENAME = 'guids.csv'
 
@@ -42,14 +42,7 @@ def harvest(rom, outdir, guids_dict=None):
             log_warning(f'Harvest of SMM modules using {cls.__name__} failed')
             continue
 
-def compact(outdir, outfile, edk2dir=None, clean=True):
-    if edk2dir:
-        known_names = [x.name.lower() for x in GuidList.guidlist_from_filesystem(edk2dir)]
-        known_guids = [x.guid.lower() for x in GuidList.guidlist_from_filesystem(edk2dir)]
-    else:
-        known_names = []
-        known_guids = []
-
+def compact(outdir, outfile, clean=False):
     # Lists of SMM executables that:
     # passed: all checks completed successfully without issuing a warning
     # ignore: at least one check issued a warning, but that's probably a false positive that can be ignored
@@ -63,37 +56,27 @@ def compact(outdir, outfile, edk2dir=None, clean=True):
             # At least one module issued a warning.
             data = open(report, 'r').read()
             basename = module.stem.lower()
-            if (basename in known_names) or (basename in known_guids):
-                # Comes from EDK2, so likely to be a false positive.
-                ignore.append((str(module), data))
-            else:
-                # Unknown module (probably OEM-specific), might be a true positive.
-                verify.append((str(module), data))
+            # Unknown module (probably OEM-specific), might be a true positive.
+            verify.append((str(module), data))
                 
             if clean: os.remove(report)
         else:
             # No warnings.
             passed.append(str(module))
         
-    with closing(BrickFormatter(outfile)) as bf:
+    with open(outfile, 'w') as bf:
         bf.write('*' * 50 + ' SUMMARY ' + '*' * 50)
-        bf.write()
+        bf.write('\n')
 
-        bf.write_section_header("Might be true positives")
         for x in verify:
-            bf.write_entry(x[0], x[1])
-            bf.write()
+            bf.write('''
+[*] --------------------------------------------------
+[*] {}
+[*] --------------------------------------------------'''.format(x[0]))
+            bf.write('\n')
+            bf.write(x[1])
 
-        bf.write_section_header("Likely to be false positives")
-        for x in ignore:
-            bf.write_entry(x[0], x[1])
-            bf.write()
-
-        bf.write_section_header("No vulnerabilities found")
-        for x in passed:
-            bf.write_entry(x)
-
-def main(rom, outdir, module):
+def main(rom, outdir, modules):
     with log_step('Building GUIDs database'):
         db = GuidsDatabase(GUIDS_FILENAME)
     
@@ -109,39 +92,29 @@ def main(rom, outdir, module):
     with log_step('Cleaning-up temporary files'):
         hunter.cleanup()
 
-    # Analyze the modules with efiXplorer.
-    with log_step('Applying efiXplorer'):
-        hunter.run_script('modules/efiXplorer/apply_efiXplorer.py')
+    if modules is None:
+        modules = AVAILABLE_MODULE_NAMES
 
-    # Scan for functions which have explicit handling for CSEG memory.
-    with log_step('Scanning for CSEG-related functions'):
-        hunter.run_script('modules/cseg/scan_cseg.py')
+    bootstrap_script = pathlib.Path(__file__).parent / 'bootstrap.py'
 
-    # Check for SMM modules which might use legacy protocols.
-    with log_step('Scanning for legacy protocols'):
-        hunter.run_script('modules/legacy_protocols/legacy_protocols.py')
-
-    # Check for missing calls to SmmIsBufferOutsideSmmValid()
-    with log_step('Scanning for missing calls to SmmIsBufferOutsideSmmValid()'):
-        hunter.run_script('modules/buffer_outside_smm/check_buffer_outside_smm.py')
-
-    with log_step('Scanning for calls to SetVariable() which might leak SMRAM data'):
-        hunter.run_script('modules/setvar_infoleak/setvar_infoleak.py')
+    for mod in modules:
+        with log_step(MODULE_DESCRIPTIONS[mod]):
+            hunter.run_script(bootstrap_script, mod)
 
     # Merge all individual output files into one file.
     with log_step('Compacting output files'):
-        compact(outdir, f'{rom}.brick', 'edk2')
+        compact(outdir, f'{rom}.brick')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
     parser.add_argument('rom', help='Path to firmware image to analyze')
     parser.add_argument('-o', '--outdir', default='output', help='Path to output directory')
-    parser.add_argument('-m', '--module', default='*', help='The module to execute (default: all)')
+    parser.add_argument('-m', '--modules', nargs='*', help='Module to execute (default: all)', choices=AVAILABLE_MODULE_NAMES)
     
     args = parser.parse_args()
 
     with log_timing(f'Analyzing {args.rom}'):
-        main(args.rom, args.outdir, args.module)
+        main(args.rom, args.outdir, args.modules)
 
-    log_operation(f'Please check the resulting output file at {args.rom}.brick')
+    log_operation(f'Check the resulting output file at {args.rom}.brick')

@@ -28,29 +28,3 @@ def log_operation(msg):
 
 def log_warning(msg):
     print(colorama.Fore.LIGHTRED_EX + '[!] ' + msg)
-
-class BrickFormatter:
-
-    def __init__(self, outfile) -> None:
-        self.outfile = open(outfile, 'w')
-
-    def write(self, text="", nl=True):
-        if nl: text += "\n"
-        self.outfile.write(text)
-
-    def write_section_header(self, hdr):
-        self.write('[*] ' + "-" * 50)
-        self.write('[*] ' + hdr)
-        self.write('[*] ' + "-" * 50)
-        self.write()
-
-    def write_entry(self, ent, data=None):
-        if data is None:
-            self.write(ent)
-        else:
-            self.write(ent)
-            self.write('-' * 50)
-            self.write(data, nl=False)
-
-    def close(self):
-        self.outfile.close()

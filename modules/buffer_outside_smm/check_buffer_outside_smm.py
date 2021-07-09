@@ -1,27 +1,22 @@
-import sys
+import uuid
+from ..efiXplorer.apply_efiXplorer import EfiXplorerModule
+from ..base_module import BaseModule
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parents[1]))
-from base_module import BaseModule
-
 import os
-import idc
 
 import rizzo
-import idautils
-import alleycat
-from contextlib import closing
-import uuid
 
 from bip.base import *
-import bip_utils
+from bip.hexrays import *
+
+from .. import brick_utils
 
 class SmmBufferValidModule(BaseModule):
 
     SIGDIR = Path(__file__).parent / r"sig"
-    AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID = '{da473d7f-4b31-4d63-92b7-3d905ef84b84}'
-    EFI_SMM_CPU_PROTOCOL_GUID = '{EB346B97-975F-4A9F-8B22-F8E92BB3D569}'
-
+    AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID = uuid.UUID('{da473d7f-4b31-4d63-92b7-3d905ef84b84}')
+    
     @staticmethod
     def _get_SmmIsBufferOutsideSmmValid(sigdir):
         for sig in os.listdir(sigdir):
@@ -33,61 +28,84 @@ class SmmBufferValidModule(BaseModule):
         return BipFunction.get_by_name("SmmIsBufferOutsideSmmValid")
 
     @staticmethod
-    def _get_sw_smi_handlers() -> list:
-        return BipFunction.get_by_prefix("SwSmiHandler")
+    def _get_smi_handlers() -> list:
+        # Legacy SW SMIs + CommBuffer SMIs
+        return BipFunction.get_by_prefix("SwSmiHandler") + BipFunction.get_by_prefix("Handler")
 
-    @staticmethod
-    def _get_comm_buffer_smi_handlers() -> list:
-         return [f for f in BipFunction.get_by_prefix("Handler") if f.size > 10]
+    def read_save_state_calls(self):
+        return EfiXplorerModule.json_report().get('ReadSaveState', [])
 
-    def references_ami_smm_buffer_validation_protocol(self):
+    def get_variable_calls(self):
+        rt_all = EfiXplorerModule.json_report().get('rt_all')
+        if rt_all is not None:
+            return rt_all.get('GetVariable', [])
+        else:
+            return []
+
+    def is_interesting_smi_handler(self, f: BipFunction):
+        if f.name.startswith('Handler'):
+            # CommBuffer based SMI.
+            return True
+
+        if f.name.startswith('SwSmiHandler'):
+            # Legacy software SMI.
+            for rss in self.read_save_state_calls():
+                if brick_utils.path_exists(f, rss):
+                    # The SMI handler calls ReadSaveState().
+                    return True
+
+            for gv in self.get_variable_calls():
+                if brick_utils.path_exists(f, gv):
+                    # The SMI handler calls GetVariable().
+                    return True
+
+        return False
+
+    def _get_interesting_smi_handlers(self):
+        all_smis = self._get_smi_handlers()
+        interesting_smis = (smi for smi in all_smis if self.is_interesting_smi_handler(smi))
+        return interesting_smis
+
+    def _get_ami_smm_buffer_validation_protocol(self):
+
+        def call_node_callback(cn: CNodeExprCall):
+            if '->SmmLocateProtocol' in cn.cstr:
+                if 'AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID' in cn.get_arg(0).cstr:
+                    interface = cn.get_arg(2).ignore_cast
+                    if isinstance(interface, CNodeExprRef):
+                        # if we have a ref (&global) we want the object under
+                        interface = interface.ops[0].ignore_cast
+                    if not isinstance(interface, CNodeExprObj):
+                        # if this is not a global object we ignore it
+                        return
+                    ea = interface.value # get the address of the object
+                    BipElt(ea).name = 'gAmiSmmBufferValidationProtocol'
+
         # Some SMM modules use the AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID protocol instead of calling
         # SmmIsBufferOutsideSmmValid directly.
-        found = bip_utils.search_guid(self.AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID)
+        found = brick_utils.search_guid(self.AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID)
         if found:
             # This protocol is not recognized by efiXplorer, so must rename it manually.
             elt = BipElt(found.ea)
             elt.name = "AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID"
-        return found
 
-    def _run(self):
+            for func in BipFunction.iter_all():
+                try:
+                    cfunc = HxCFunc.from_addr(func.ea)
+                    cfunc.visit_cnode_filterlist(call_node_callback, [CNodeExprCall])
+                except Exception as e:
+                    self.logger.debug(e, exc_info=True)
 
-        # ################# #
-        # Main module logic #
-        # ################# #
+            return GetEltByName('gAmiSmmBufferValidationProtocol')
 
-        if self.references_ami_smm_buffer_validation_protocol():
-            return
+        return None
 
+    def run(self):
         SmmIsBufferOutsideSmmValid = self._get_SmmIsBufferOutsideSmmValid(self.SIGDIR)
+        gAmiSmmBufferValidationProtocol = self._get_ami_smm_buffer_validation_protocol()
 
-        # Communicate()-based SMIs are always part of the attack surface.
-        attack_surface_smis = self._get_comm_buffer_smi_handlers()
-
-        if bip_utils.search_guid(self.EFI_SMM_CPU_PROTOCOL_GUID):
-            # This module consumes the EFI_SMM_CPU_PROTOCOL. That means SW SMI handlers can call ReadSaveState() to retrieve arguments to the call.
-            # Therefore, we'll add them to the potential attack surface.
-            attack_surface_smis.extend(self._get_sw_smi_handlers())
-        else:
-            # This module doesn't consume the EFI_SMM_CPU_PROTOCOL. That means all the SW SMI handlers don't call ReadSaveState() to retrieve arguments to the call.
-            # Therefore, we won't consider them part of the potential attack surface.
-            pass
-
-        for handler in attack_surface_smis:
-            suspicious = False
-            if not SmmIsBufferOutsideSmmValid:
-                suspicious = True
-            else:
-                paths = alleycat.AlleyCat(SmmIsBufferOutsideSmmValid.ea, handler.ea).paths
-                if not paths:
-                    suspicious = True
-                else:
-                    # This indicates the handler calls SmmIsBufferOutsideSmmValid on nested pointers in addition to the CommBuffer itself.
-                    pass
-
-            if suspicious:
-                self.logger.warning(f"SMI at 0x{handler.ea:x} doesn't call SmmIsBufferOutsideSmmValid(), check nested pointers")
-
-with closing(SmmBufferValidModule()) as module:
-    module.run()
-
+        for handler in self._get_interesting_smi_handlers():
+            if not brick_utils.path_exists(SmmIsBufferOutsideSmmValid, handler) and \
+               not brick_utils.path_exists(gAmiSmmBufferValidationProtocol, handler):
+                self.logger.warning(f"SMI at 0x{handler.ea:x} doesn't validate the comm buffer, check nested pointers")
+            

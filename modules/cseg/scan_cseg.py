@@ -15,7 +15,7 @@ class CsegOnlyModule(BaseModule):
     def __init__(self) -> None:
         super().__init__()
 
-    def _run(self):
+    def run(self):
         SMRAM_CSEG_ADDRESSES = (
             '0A0000h', # Base address
             '0BFFFFh', # End address
@@ -57,6 +57,4 @@ class CsegOnlyModule(BaseModule):
                 if alleycat.AlleyCat(func.ea, smi.ea).paths:
                     # Report that a potentially vulnerable function was found.
                     self.logger.warning(f'Function 0x{func.ea:x} contains references to CSEG-only addresses')
-
-with closing(CsegOnlyModule()) as module:
-    module.run()
+                    
