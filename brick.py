@@ -29,9 +29,9 @@ def harvest(rom, outdir, guids_dict=None):
             harvester.ext = 'efi'
             harvester.guids_dict = guids_dict
             harvester.harvest(rom, outdir)
-        except:
+        except Exception as e:
             # Harvest was unsuccessful, fall back into other harvesters in case there are any.
-            log_warning(f'Harvest of SMM modules using {cls.__name__} failed')
+            log_warning(f'Harvest of SMM modules using {cls.__name__} failed, {e}')
             continue
 
         if os.listdir(outdir):
