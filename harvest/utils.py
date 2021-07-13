@@ -30,5 +30,5 @@ def harvest(rom, outdir, guids_dict=None):
             break
         else:
             # Harvest was unsuccessful, fall back into other harvesters in case there are any.
-            log_warning(f'Harvest of SMM modules using {cls.__name__} failed')
+            log_warning(f"Harvest of SMM modules using '{cls.__name__}' failed")
             continue
