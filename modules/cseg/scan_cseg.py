@@ -45,7 +45,6 @@ class CsegOnlyModule(BaseModule):
                             continue
 
                         functions_map[func] += 1
-                        self.logger.debug(f'Found CSEG related instruction at 0x{instr.ea:x}')
 
         for func, counter in functions_map.items():
             if counter < 2:
