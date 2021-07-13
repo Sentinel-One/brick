@@ -40,16 +40,25 @@ class SetVarInfoLeakModule(BaseModule):
 
     @staticmethod
     def get_variable_name(node):
-        try:
-            # Works if the the node is a local variable.
-            return node.lvar_name
-        except AttributeError:
-            # Works if the node is a pointer to a constant string.
-            try:
-                return brick_utils.get_wstring(node.ignore_cast.value)
-            except:
-                # Fallback, probably an expression such as &VariableName.
-                return node.cstr
+        var_name = None
+
+        if isinstance(node, CNodeExprRef):
+            # if we have a ref (&something) we want the object under
+            node = node.ops[0].ignore_cast
+
+        if isinstance(node, CNodeExprVar):
+            # Local variable.
+            var_name = node.lvar_name
+        
+        if isinstance(node, CNodeExprObj):
+            # if this is a global object, get name of variable from memory.
+            var_name = brick_utils.get_wstring(node.value)
+            
+        if not var_name:
+            # Fallback, just use the C-string.
+            var_name =  node.cstr
+
+        return var_name
 
     def collect_GetSetVariable_calls(self):
 
