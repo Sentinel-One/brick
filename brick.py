@@ -76,7 +76,7 @@ def compact(outdir, outfile, clean=False):
             bf.write('\n')
             bf.write(x[1])
 
-def main(rom, outdir, modules):
+def main(rom, outdir, modules, verbose=False):
     with log_step('Building GUIDs database'):
         db = GuidsDatabase(GUIDS_FILENAME)
     
@@ -84,7 +84,7 @@ def main(rom, outdir, modules):
         harvest(rom, outdir, db.guid2name)
 
     # # 64-bit binaries with .efi extension
-    hunter = Hunter(outdir, 64, '.efi')
+    hunter = Hunter(outdir, 64, '.efi', verbose)
 
     with log_step('Analyzing SMM modules'):
         hunter.analyze()
@@ -111,10 +111,11 @@ if __name__ == '__main__':
     parser.add_argument('rom', help='Path to firmware image to analyze')
     parser.add_argument('-o', '--outdir', default='output', help='Path to output directory')
     parser.add_argument('-m', '--modules', nargs='*', help='Module to execute (default: all)', choices=AVAILABLE_MODULE_NAMES)
+    parser.add_argument('-v', '--verbose', action='store_true', help='Use more verbose traces')
     
     args = parser.parse_args()
 
     with log_timing(f'Analyzing {args.rom}'):
-        main(args.rom, args.outdir, args.modules)
+        main(args.rom, args.outdir, args.modules, args.verbose)
 
     log_operation(f'Check the resulting output file at {args.rom}.brick')
