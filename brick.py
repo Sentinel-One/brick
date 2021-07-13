@@ -1,46 +1,14 @@
-from contextlib import closing
-from harvest.NativePythonHarvester import NativePythonHarvester
-from harvest.UefiToolHarvester import UefiToolHarvester
 import os
 import pathlib
 import argparse
-import shutil
 from guids_db import GuidsDatabase
 from hunter import Hunter
 import glob
 from logger import log_step, log_operation, log_timing, log_warning
 from modules import AVAILABLE_MODULE_NAMES, MODULE_DESCRIPTIONS
+from harvest.utils import harvest
 
 GUIDS_FILENAME = 'guids.csv'
-
-def harvest(rom, outdir, guids_dict=None):
-    log_operation(f'Creating directory {outdir}')
-
-    if os.path.exists(outdir):
-        shutil.rmtree(outdir)
-
-    os.mkdir(outdir)
-
-    for cls in (NativePythonHarvester, UefiToolHarvester):
-        log_operation(f'Trying to harvest SMM modules using {cls.__name__}')
-
-        try:
-            harvester = cls()
-            harvester.ext = 'efi'
-            harvester.guids_dict = guids_dict
-            harvester.harvest(rom, outdir)
-        except Exception as e:
-            # Harvest was unsuccessful, fall back into other harvesters in case there are any.
-            log_warning(f'Harvest of SMM modules using {cls.__name__} failed, {e}')
-            continue
-
-        if os.listdir(outdir):
-            # Harvest was successful.
-            break
-        else:
-            # Harvest was unsuccessful, fall back into other harvesters in case there are any.
-            log_warning(f'Harvest of SMM modules using {cls.__name__} failed')
-            continue
 
 def compact(outdir, outfile, clean=False):
     # Lists of SMM executables that:
