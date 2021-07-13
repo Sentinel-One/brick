@@ -29,6 +29,7 @@ class SetVarInfoLeakModule(BaseModule):
         def _call_node_callback(cnode):
             if '->SetVariable' in cnode.cstr or '->SmmSetVariable' in cnode.cstr:
                 brick_utils.set_indirect_call_type(cnode.ea, self.SET_VARIABLE_PROTOTYPE)
+                cnode.hxcfunc.invalidate_cache()
 
         for func in BipFunction.iter_all():
             try:
