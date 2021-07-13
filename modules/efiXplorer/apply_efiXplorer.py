@@ -55,7 +55,7 @@ class EfiXplorerModule(BaseModule):
         for vuln_name in vulns:
             # In JSON all integers must be written in decimal radix. Convert them to hex for enhanched readability.
             addresses = [hex(ea) for ea in self.json_report()['vulns'][vuln_name]]
-            self.logger.warning(f'efiXplorer: {vuln_name} occuring at {addresses}')
+            self.logger.warning(f'{vuln_name} occuring at {addresses}')
 
 
     def run(self):
