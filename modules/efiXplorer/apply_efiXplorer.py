@@ -40,7 +40,6 @@ class EfiXplorerModule(BaseModule):
 
     def set_sw_smi_prototype(self):
         for sw_smi_handler in BipFunction.get_by_prefix("SwSmiHandler"):
-            self.logger.debug(f'Applying signature of EFI_SMM_HANDLER_ENTRY_POINT to 0x{sw_smi_handler.ea:x}')
             self.EFI_SMM_HANDLER_ENTRY_POINT.set_at(sw_smi_handler.ea)
 
     def set_text_section_rwx(self):
