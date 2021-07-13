@@ -1,14 +1,12 @@
 import os
 import pathlib
 import argparse
-from guids_db import GuidsDatabase
+from guids.guids_db import GuidsDatabase
 from hunter import Hunter
 import glob
 from logger import log_step, log_operation, log_timing, log_warning
 from modules import AVAILABLE_MODULE_NAMES, MODULE_DESCRIPTIONS
 from harvest.utils import harvest
-
-GUIDS_FILENAME = 'guids.csv'
 
 def compact(outdir, outfile, clean=False):
     # Lists of SMM executables that:
@@ -46,7 +44,7 @@ def compact(outdir, outfile, clean=False):
 
 def main(rom, outdir, modules, verbose=False):
     with log_step('Building GUIDs database'):
-        db = GuidsDatabase(GUIDS_FILENAME)
+        db = GuidsDatabase()
     
     with log_step('Harvesting SMM modules'):
         harvest(rom, outdir, db.guid2name)

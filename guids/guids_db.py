@@ -1,9 +1,11 @@
 import csv
 import functools
 
+DEFAULT_GUIDS_FILENAME = 'guids.csv'
+
 class GuidsDatabase:
 
-    def __init__(self, filename):
+    def __init__(self, filename=DEFAULT_GUIDS_FILENAME):
         self.guid2name = {}
         with open(filename, 'r') as csvfile:
             reader = csv.reader(csvfile)
