@@ -94,7 +94,7 @@ class SmmBufferValidModule(BaseModule):
                     cfunc = HxCFunc.from_addr(func.ea)
                     cfunc.visit_cnode_filterlist(call_node_callback, [CNodeExprCall])
                 except Exception as e:
-                    self.logger.debug(e, exc_info=True)
+                    self.logger.debug(e)
 
             return GetEltByName('gAmiSmmBufferValidationProtocol')
 
