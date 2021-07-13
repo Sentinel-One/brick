@@ -36,12 +36,7 @@ class SetVarInfoLeakModule(BaseModule):
                 hxf = HxCFunc.from_addr(func.ea)
                 hxf.visit_cnode_filterlist(_call_node_callback, [CNodeExprCall])
             except Exception as e:
-                self.logger.debug(e, exc_info=True)
-
-            # Refresh Hex-Rays pseudocode.
-            vdui = ida_hexrays.open_pseudocode(func.ea, ida_hexrays.OPF_REUSE)
-            if vdui:
-                vdui.refresh_view(True)
+                self.logger.debug(e)
 
     @staticmethod
     def get_variable_name(node):
@@ -70,7 +65,7 @@ class SetVarInfoLeakModule(BaseModule):
                 hxf = HxCFunc.from_addr(func.ea)
                 hxf.visit_cnode_filterlist(callback, [CNodeExprCall])
             except Exception as e:
-                self.logger.debug(e, exc_info=True)
+                self.logger.debug(e)
 
     def process_GetVariable_calls(self):
         # Process calls to GetVariable()
