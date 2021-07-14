@@ -8,6 +8,7 @@ import idaapi
 import ida_segment
 import idc
 from bip.base import *
+
 class EfiXplorerModule(BaseModule):
 
     EFI_SMM_HANDLER_ENTRY_POINT = BipType.from_c("""EFI_STATUS (f)(
@@ -47,6 +48,16 @@ class EfiXplorerModule(BaseModule):
         if text_section:
             idc.set_segm_attr(text_section.start_ea, idc.SEGATTR_PERM, idaapi.SEGPERM_READ | idaapi.SEGPERM_WRITE | idaapi.SEGPERM_EXEC)
 
+    def find_missing_functions(self):
+        """
+        Use codatify to find functions that the initial auto-analysis missed.
+        """
+        try:
+            import codatify
+            codatify.fix_code()
+        except ImportError:
+            pass
+
     def propagate_vulns(self):
         vulns = self.json_report().get('vulns')
         if not vulns:
@@ -59,6 +70,9 @@ class EfiXplorerModule(BaseModule):
 
 
     def run(self):
+        # Find functions that the initial auto-analysis might have missed.
+        self.find_missing_functions()
+
         # arg = 1 (01): disable_ui
         ida_loader.load_and_run_plugin(str(self.plugin_path), self.DISABLE_UI)
             
