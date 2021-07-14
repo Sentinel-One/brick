@@ -10,6 +10,7 @@ class BaseModule(ABC):
 
     @abstractmethod
     def run(self):
+        # Should be overriden by subclasses.
         pass
 
     def execute(self):
