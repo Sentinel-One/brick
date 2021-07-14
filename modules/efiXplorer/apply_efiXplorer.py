@@ -1,7 +1,9 @@
 from pathlib import Path
 import json
+import uuid
 
 from ..base_module import BaseModule
+from .. import brick_utils
 
 import ida_loader
 import idaapi
@@ -18,6 +20,8 @@ class EfiXplorerModule(BaseModule):
         UINTN * CommBufferSize)""")
 
     DISABLE_UI = 1
+
+    EFI_SMM_RUNTIME_SERVICES_TABLE_GUID = uuid.UUID('{395C33FE-287F-413E-A055-8088C0E1D43E}')
 
     @property
     def plugin_path(self):
@@ -67,6 +71,12 @@ class EfiXplorerModule(BaseModule):
             # In JSON all integers must be written in decimal radix. Convert them to hex for enhanched readability.
             addresses = [hex(ea) for ea in self.json_report()['vulns'][vuln_name]]
             self.logger.warning(f'{vuln_name} occuring at {addresses}')
+
+            if vuln_name == 'smm_callout':
+                if brick_utils.search_guid(self.EFI_SMM_RUNTIME_SERVICES_TABLE_GUID):
+                    self.logger.info('Module references EFI_SMM_RUNTIME_SERVICES_TABLE_GUID, call-outs likely to be false positive')
+                else:
+                    self.logger.warning('Module does not reference EFI_SMM_RUNTIME_SERVICES_TABLE_GUID, call-outs might be true positives')
 
 
     def run(self):
