@@ -1,7 +1,8 @@
 import csv
 import functools
+from pathlib import Path
 
-DEFAULT_GUIDS_FILENAME = 'guids.csv'
+DEFAULT_GUIDS_FILENAME = Path(__file__).parent / 'guids.csv'
 
 class GuidsDatabase:
 
