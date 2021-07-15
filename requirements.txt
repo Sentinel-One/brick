@@ -1,3 +1,4 @@
 uefi-firmware
 edk2-pytool-extensions
 colorama
+find-ida-user-dir
