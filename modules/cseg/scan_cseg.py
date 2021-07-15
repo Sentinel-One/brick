@@ -1,13 +1,8 @@
-import sys
-import pathlib
-
-sys.path.append(str(pathlib.Path(__file__).parents[1]))
 from base_module import BaseModule
+from bip.base import *
 
 import re
-import alleycat
-
-from bip.base import *
+import brick_utils
 
 class CsegOnlyModule(BaseModule):
 
@@ -52,7 +47,7 @@ class CsegOnlyModule(BaseModule):
 
             # Check that the function is reachable from a SMI handler.
             for smi in smi_handlers:
-                if alleycat.AlleyCat(func.ea, smi.ea).paths:
+                if brick_utils.path_exists(func, smi):
                     # Report that a potentially vulnerable function was found.
                     self.logger.warning(f'Function 0x{func.ea:x} contains references to CSEG-only addresses')
                     
