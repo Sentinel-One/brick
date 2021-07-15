@@ -6,7 +6,6 @@ from base_module import BaseModule
 
 import re
 import alleycat
-from contextlib import closing
 
 from bip.base import *
 

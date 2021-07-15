@@ -4,7 +4,6 @@ import brick_utils
 
 from bip.base import *
 from bip.hexrays import *
-import ida_hexrays
 
 class SetVarInfoLeakModule(BaseModule):
 
