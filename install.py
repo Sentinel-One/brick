@@ -18,15 +18,15 @@ def download_file(url, local_path):
     open(local_path, 'wb').write(r.content)
 
 def install_ida_plugins():
-    plugins_dir = find_ida_user_dir.find_path('plugins')
+    plugins_dir = Path(find_ida_user_dir.find_path('plugins'))
 
     IDAPlugin = namedtuple('Plugin', ['name', 'remote_url', 'local_path'])
 
     PLUGINS = {
-        IDAPlugin('codatify', 'https://raw.githubusercontent.com/tacnetsol/ida/master/plugins/codatify/codatify.py', Path(plugins_dir) / 'codatify.py'),
-        IDAPlugin('rizzo', 'https://raw.githubusercontent.com/tacnetsol/ida/master/plugins/rizzo/rizzo.py', Path(plugins_dir) / 'rizzo.py'),
-        IDAPlugin('alleycat', 'https://raw.githubusercontent.com/tacnetsol/ida/master/plugins/alleycat/alleycat.py', Path(plugins_dir) / 'alleycat.py'),
-        IDAPlugin('shims', 'https://raw.githubusercontent.com/tacnetsol/ida/master/plugins/shims/ida_shims.py', Path(plugins_dir) / 'shims' / 'ida_shims.py'),
+        IDAPlugin('codatify', 'https://raw.githubusercontent.com/tacnetsol/ida/master/plugins/codatify/codatify.py', plugins_dir / 'codatify.py'),
+        IDAPlugin('rizzo', 'https://raw.githubusercontent.com/tacnetsol/ida/master/plugins/rizzo/rizzo.py', plugins_dir / 'rizzo.py'),
+        IDAPlugin('alleycat', 'https://raw.githubusercontent.com/tacnetsol/ida/master/plugins/alleycat/alleycat.py', plugins_dir / 'alleycat.py'),
+        IDAPlugin('shims', 'https://raw.githubusercontent.com/tacnetsol/ida/master/plugins/shims/ida_shims.py', plugins_dir / 'shims' / 'ida_shims.py'),
     }
 
     for plugin in PLUGINS:
@@ -44,6 +44,7 @@ def install_bip():
         log_operation('Installing Bip')
         subprocess.check_call('python bip-master/install.py')
     finally:
+        log_operation('Removing temporary Bip files')
         os.remove('bip-master.zip')
         shutil.rmtree('bip-master')
 
