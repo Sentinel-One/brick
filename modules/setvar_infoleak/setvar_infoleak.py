@@ -105,8 +105,8 @@ class SetVarInfoLeakModule(BaseModule):
                 self.res = False
                 self.logger.warning(f'Variable {varname} is read by function 0x{func_ea:x} and then written again using constant size 0x{varsize.value:x}')
 
-            if self.res:
-                self.logger.info(f'No potential SetVariable() info leaks were detected')
+        if self.res:
+            self.logger.success(f'No potential SetVariable() info leaks were detected')
 
     def run(self):
         self.fix_SetVariable_prototype()
