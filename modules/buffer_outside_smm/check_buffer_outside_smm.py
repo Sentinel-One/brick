@@ -16,7 +16,8 @@ class SmmBufferValidModule(BaseModule):
 
     SIGDIR = Path(__file__).parent / r"sig"
     AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID = uuid.UUID('{da473d7f-4b31-4d63-92b7-3d905ef84b84}')
-    
+    HANDLER_SIZE_THRESHOLD = 10     # To filter out empty handlers
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -46,7 +47,7 @@ class SmmBufferValidModule(BaseModule):
             return []
 
     def is_interesting_smi_handler(self, f: BipFunction):
-        if f.name.startswith('Handler'):
+        if f.name.startswith('Handler') and f.size >= self.HANDLER_SIZE_THRESHOLD:
             # CommBuffer based SMI.
             return True
 
