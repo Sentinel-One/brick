@@ -65,7 +65,7 @@ class EfiXplorerModule(BaseModule):
     def propagate_vulns(self):
         vulns = self.json_report().get('vulns')
         if not vulns:
-            self.logger.success("efiXplorer didn't detect any vulnerability")
+            self.logger.success("efiXplorer didn't detect any vulnerabilities")
             return
 
         for vuln_name in vulns:
