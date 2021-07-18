@@ -71,7 +71,7 @@ def main(rom, outdir, modules, verbose=False):
 
     # Merge all individual output files into one file.
     with log_step('Compacting output files'):
-        compact(outdir, f'{rom}.brick')
+        compact(outdir, f'{rom}.html')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -86,4 +86,4 @@ if __name__ == '__main__':
     with log_timing(f'Analyzing {args.rom}'):
         main(args.rom, args.outdir, args.modules, args.verbose)
 
-    log_operation(f'Check the resulting output file at {args.rom}.brick')
+    log_operation(f'Check the resulting output file at {args.rom}.html')
