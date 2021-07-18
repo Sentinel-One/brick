@@ -14,13 +14,12 @@ class LegacyProtocolsModule(BaseModule):
     def run(self):
         guids_db = GuidsDatabase()
         
-        has_legacy = False
         for guid, name in guids_db.legacy_guids.items():
             found = brick_utils.search_guid(guid)
             if found:
                 # Report that a legacy GUID was found.
-                has_legacy = True
+                self.res = False
                 self.logger.warning(f'Found legacy protocol {name} {guid} at 0x{found.ea:x}')
 
-        if not has_legacy:
-            self.logger.info('No legacy protocols were found')
+        if self.res:
+            self.logger.success('No legacy protocols were found')

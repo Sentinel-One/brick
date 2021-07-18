@@ -17,6 +17,9 @@ class SmmBufferValidModule(BaseModule):
     SIGDIR = Path(__file__).parent / r"sig"
     AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID = uuid.UUID('{da473d7f-4b31-4d63-92b7-3d905ef84b84}')
     
+    def __init__(self) -> None:
+        super().__init__()
+
     @staticmethod
     def _get_SmmIsBufferOutsideSmmValid(sigdir):
         for sig in os.listdir(sigdir):
@@ -107,5 +110,8 @@ class SmmBufferValidModule(BaseModule):
         for handler in self._get_interesting_smi_handlers():
             if not brick_utils.path_exists(SmmIsBufferOutsideSmmValid, handler) and \
                not brick_utils.path_exists(gAmiSmmBufferValidationProtocol, handler):
+                self.res = False
                 self.logger.warning(f"SMI {handler.name} (0x{handler.ea:x}) doesn't validate the comm buffer, check nested pointers")
             
+        if self.res:
+            self.logger.success(f"All SMI handlers validate the comm buffer")

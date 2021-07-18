@@ -3,10 +3,12 @@ import traceback
 from abc import ABC, abstractmethod
 import sys
 
+
 class BaseModule(ABC):
 
     def __init__(self) -> None:
         self.logger = logging.getLogger('brick')
+        self.res = True
 
     @abstractmethod
     def run(self):
