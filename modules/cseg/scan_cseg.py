@@ -1,9 +1,9 @@
-from base_module import BaseModule
+from ..base_module import BaseModule
+from .. import brick_utils
+
 from bip.base import *
 
 import re
-import brick_utils
-
 class CsegOnlyModule(BaseModule):
 
     def __init__(self) -> None:
@@ -50,4 +50,3 @@ class CsegOnlyModule(BaseModule):
                 if brick_utils.path_exists(func, smi):
                     # Report that a potentially vulnerable function was found.
                     self.logger.warning(f'Function 0x{func.ea:x} contains references to CSEG-only addresses')
-                    

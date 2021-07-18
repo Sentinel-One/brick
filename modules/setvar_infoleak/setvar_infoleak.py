@@ -1,6 +1,5 @@
-from base_module import BaseModule
-
-import brick_utils
+from ..base_module import BaseModule
+from .. import brick_utils
 
 from bip.base import *
 from bip.hexrays import *

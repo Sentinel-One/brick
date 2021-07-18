@@ -2,8 +2,8 @@
 from guids.guids_db import GuidsDatabase
 
 from bip.base import *
-import brick_utils
 
+from .. import brick_utils
 from ..base_module import BaseModule
 
 class LegacyProtocolsModule(BaseModule):
