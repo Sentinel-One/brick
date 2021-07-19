@@ -34,6 +34,6 @@ class Hunter:
             # IDA Hunt prefers fully qualified paths.
             script = str(resolved)
 
-        script_args = f'{script} ' + ' '.join(args)
-        return self._run_idahunt(['--filter', fr"filters\names.py -a {self.arch} -e {self.ext} -v", '--scripts', script_args])
+        script_with_args = f'{script} ' + ' '.join(args)
+        return self._run_idahunt(['--filter', fr"filters\names.py -a {self.arch} -e {self.ext} -v", '--scripts', script_with_args])
         
