@@ -77,10 +77,9 @@ class EfiXplorerModule(BaseModule):
                 BipFunction.create(ea)
 
     def propagate_vulns(self):
-        vulns = self.json_report().get('vulns')
-        if not vulns:
-            self.logger.success("efiXplorer didn't detect any vulnerabilities")
-            return
+        vulns = self.json_report().get('vulns', [])
+        if vulns:
+            self.res = False
 
         for vuln_name in vulns:
             # In JSON all integers must be written in decimal radix. Convert them to hex for enhanched readability.
@@ -92,6 +91,9 @@ class EfiXplorerModule(BaseModule):
                     self.logger.info('Module references EFI_SMM_RUNTIME_SERVICES_TABLE_GUID, call-outs likely to be false positive')
                 else:
                     self.logger.warning('Module does not reference EFI_SMM_RUNTIME_SERVICES_TABLE_GUID, call-outs might be true positives')
+        
+        if self.res:
+            self.logger.success("efiXplorer didn't detect any vulnerabilities")
 
 
     def run(self):
