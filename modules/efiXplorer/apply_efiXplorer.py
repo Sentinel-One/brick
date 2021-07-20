@@ -47,6 +47,12 @@ class EfiXplorerModule(BaseModule):
         for sw_smi_handler in BipFunction.get_by_prefix("SwSmiHandler"):
             self.EFI_SMM_HANDLER_ENTRY_POINT.set_at(sw_smi_handler.ea)
 
+    def fix_read_save_state_prototypes(self):
+        # Applies correct function prototype to calls to ReadSaveState()
+        addresses = self.json_report().get('ReadSaveState', [])
+        for ea in addresses:
+            brick_utils.set_indirect_call_type(ea, 'EFI_SMM_READ_SAVE_STATE')
+
     def set_text_section_rwx(self):
         text_section = ida_segment.get_segm_by_name('.text')
         if text_section:
@@ -108,7 +114,8 @@ class EfiXplorerModule(BaseModule):
             
         # Apply correct signature to all SW SMI handlers.
         self.set_sw_smi_prototype()
-
+        self.fix_read_save_state_prototypes()
+        
         ida_loader.flush_buffers()
 
         # Check if efiXplorer detected any potential vulnerabilities, and if so propagate them.
