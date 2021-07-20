@@ -95,6 +95,9 @@ class EfiXplorerModule(BaseModule):
 
 
     def run(self):
+        # Fix permissions for the code section
+        self.set_text_section_rwx()
+
         # Find functions that the initial auto-analysis might have missed.
         self.find_missing_functions()
 
@@ -103,9 +106,6 @@ class EfiXplorerModule(BaseModule):
             
         # Apply correct signature to all SW SMI handlers.
         self.set_sw_smi_prototype()
-
-        # Fix permissions for the code section
-        self.set_text_section_rwx()
 
         ida_loader.flush_buffers()
 
