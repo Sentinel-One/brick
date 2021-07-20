@@ -62,6 +62,20 @@ class EfiXplorerModule(BaseModule):
         except ImportError:
             pass
 
+        # Codatify sometimes does one of the following:
+        # 1. Prepend int 3 instructions to the start of the function.
+        # 2. Assemble a bunch of int 3 opcodes into their own function.
+        # We attempt to fix these issues by re-creating some of the functions.
+        for f in BipFunction.iter_all():
+            ea = f.ea
+            while BipInstr(ea).bytes == [0xCC]: # int 3
+                # Counts the number of int 3
+                ea += 1
+            if (ea != f.ea) and (ea != f.end):
+                # The function has at least one int 3 in its prolouge but is not made entirely out of int 3 opcodes.
+                idc.del_func(f.ea)
+                BipFunction.create(ea)
+
     def propagate_vulns(self):
         vulns = self.json_report().get('vulns')
         if not vulns:
