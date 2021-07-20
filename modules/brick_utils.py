@@ -39,7 +39,8 @@ def path_exists(x, y):
     # Paths are symmetric.
     return bool(AlleyCat(x, y).paths + AlleyCat(y, x).paths)
 
-def set_indirect_call_type(ea, c_type):
+def set_indirect_call_type(ea, t):
     # call    qword ptr [reg+off]
-    t = BipType.from_c(c_type)
-    BipInstr(ea).op(0).type_info = t
+    instr = BipInstr(ea)
+    assert instr.mnem == 'call'
+    instr.op(0).type_info = t
