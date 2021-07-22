@@ -10,7 +10,7 @@ import idaapi
 import ida_segment
 import idc
 from bip.base import *
-
+from bip.hexrays import *
 class EfiXplorerModule(BaseModule):
 
     EFI_SMM_HANDLER_ENTRY_POINT = BipType.from_c("""EFI_STATUS (f)(
@@ -43,15 +43,9 @@ class EfiXplorerModule(BaseModule):
         with open(json_report_path, 'r') as f:
             return json.load(f)
 
-    def set_sw_smi_prototype(self):
+    def fix_sw_smis_signatures(self):
         for sw_smi_handler in BipFunction.get_by_prefix("SwSmiHandler"):
             self.EFI_SMM_HANDLER_ENTRY_POINT.set_at(sw_smi_handler.ea)
-
-    def fix_read_save_state_prototypes(self):
-        # Applies correct function prototype to calls to ReadSaveState()
-        addresses = self.json_report().get('ReadSaveState', [])
-        for ea in addresses:
-            brick_utils.set_indirect_call_type(ea, 'EFI_SMM_READ_SAVE_STATE')
 
     def set_text_section_rwx(self):
         text_section = ida_segment.get_segm_by_name('.text')
@@ -75,7 +69,7 @@ class EfiXplorerModule(BaseModule):
         for f in BipFunction.iter_all():
             print(f'In func {f}')
             new_ea = f.ea
-            while BipInstr(new_ea).bytes == [0xCC]: # int 3
+            while new_ea < f.end and BipInstr(new_ea).bytes == [0xCC]: # int 3
                 # Counts the number of int 3
                 new_ea += 1
             
@@ -110,22 +104,48 @@ class EfiXplorerModule(BaseModule):
         if self.res:
             self.logger.success("efiXplorer didn't detect any vulnerabilities")
 
-
-    def run(self):
+    def preprocess(self):
         # Fix permissions for the code section
         self.set_text_section_rwx()
-
         # Find functions that the initial auto-analysis might have missed.
         self.find_missing_functions()
 
+    def fix_efi_services_signatures(self):
+
+        EFI_SERVICES_SIGNATURES = {
+            'ReadSaveState': 'EFI_SMM_READ_SAVE_STATE',
+            'WriteSaveState': 'EFI_SMM_WRITE_SAVE_STATE',
+            'GetVariable': 'EFI_GET_VARIABLE',
+            'SmmGetVariable': 'EFI_GET_VARIABLE',
+            'SetVariable': 'EFI_SET_VARIABLE',
+            'SmmSetVariable': 'EFI_SET_VARIABLE',
+        }
+
+        def callback(cn: CNodeExprCall):
+            for service, signature in EFI_SERVICES_SIGNATURES.items():
+                if '->' + service in cn.cstr:
+                    brick_utils.set_indirect_call_type(cn.ea, signature)
+
+        for f in BipFunction.iter_all():
+            try:
+                cfunc = HxCFunc.from_addr(f.ea)
+                cfunc.visit_cnode_filterlist(callback, [CNodeExprCall])
+            except Exception as e:
+                self.logger.debug(e)
+
+    def postprocess(self):
+        # Apply correct signature to all SW SMI handlers.
+        self.fix_sw_smis_signatures()
+        # Fix signatures for common EFI/SMM services that efiXplorer missed.
+        self.fix_efi_services_signatures()
+
+    def run(self):
+        self.preprocess()
+
         # arg = 1 (01): disable_ui
         ida_loader.load_and_run_plugin(str(self.plugin_path), self.DISABLE_UI)
-            
-        # Apply correct signature to all SW SMI handlers.
-        self.set_sw_smi_prototype()
-        self.fix_read_save_state_prototypes()
         
-        ida_loader.flush_buffers()
+        self.postprocess()
 
         # Check if efiXplorer detected any potential vulnerabilities, and if so propagate them.
         self.propagate_vulns()
