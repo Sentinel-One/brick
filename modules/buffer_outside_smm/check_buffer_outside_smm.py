@@ -112,7 +112,7 @@ class SmmBufferValidModule(BaseModule):
             if not brick_utils.path_exists(SmmIsBufferOutsideSmmValid, handler) and \
                not brick_utils.path_exists(gAmiSmmBufferValidationProtocol, handler):
                 self.res = False
-                self.logger.warning(f"SMI {handler.name} (0x{handler.ea:x}) doesn't validate the comm buffer, check nested pointers")
+                self.logger.error(f"SMI {handler.name} (0x{handler.ea:x}) doesn't validate the comm buffer, check nested pointers")
             
         if self.res:
             self.logger.success(f"All SMI handlers validate the comm buffer")

@@ -90,7 +90,7 @@ class EfiXplorerModule(BaseModule):
         for vuln_name in vulns:
             # In JSON all integers must be written in decimal radix. Convert them to hex for enhanched readability.
             addresses = [hex(ea) for ea in self.json_report()['vulns'][vuln_name]]
-            self.logger.warning(f'{vuln_name} occuring at {addresses}')
+            self.logger.error(f'{vuln_name} occuring at {addresses}')
 
             if vuln_name == 'smm_callout':
                 if brick_utils.search_guid(self.EFI_SMM_RUNTIME_SERVICES_TABLE_GUID):

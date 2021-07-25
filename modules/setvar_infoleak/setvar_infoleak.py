@@ -103,7 +103,7 @@ class SetVarInfoLeakModule(BaseModule):
             varsize = call.get_arg(3)
             if isinstance(varsize, CNodeExprNum) and (varsize.value != 0):
                 self.res = False
-                self.logger.warning(f'Variable {varname} is read by function 0x{func_ea:x} and then written again using constant size 0x{varsize.value:x}')
+                self.logger.error(f'Variable {varname} is read by function 0x{func_ea:x} and then written again using constant size 0x{varsize.value:x}')
 
         if self.res:
             self.logger.success(f'No potential SetVariable() info leaks were detected')
