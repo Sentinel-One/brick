@@ -121,6 +121,8 @@ class EfiXplorerModule(BaseModule):
             buffer = buffer.ops[0].ignore_cast
         if isinstance(buffer, CNodeExprVar):
             buffer.lvar.name = 'v_' + reg_name
+        if isinstance(buffer, CNodeExprObj):
+            GetElt(buffer.value).name = 'g_' + reg_name
 
 
     @staticmethod
