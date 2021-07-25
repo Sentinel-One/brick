@@ -3,6 +3,7 @@ import os
 import shutil
 from .NativePythonHarvester import NativePythonHarvester
 from .UefiToolHarvester import UefiToolHarvester
+from .SingleFileHarvester import SingleFileHarvester
 
 def harvest(rom, outdir, guids_dict=None):
     log_operation(f'Creating directory {outdir}')
@@ -12,7 +13,7 @@ def harvest(rom, outdir, guids_dict=None):
 
     os.mkdir(outdir)
 
-    for cls in (NativePythonHarvester, UefiToolHarvester):
+    for cls in (SingleFileHarvester, NativePythonHarvester, UefiToolHarvester):
         log_operation(f"Trying to harvest SMM modules using '{cls.__name__}'")
 
         try:
