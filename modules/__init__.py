@@ -7,7 +7,7 @@ BRICK_MODULES_NAMES = (
     'setvar_infoleak',
 )
 
-BRICK_ODULES_DESCRIPTIONS = {
+BRICK_MODULES_DESCRIPTIONS = {
     'efiXplorer': 'Analyzing a SMM binary with efiXplorer',
     'smm_buffer': 'Scanning for SMI handlers not calling SmmIsBufferOutsideSmmValid() or equivalent on the CommBuffer',
     'legacy_protocols': 'Scanning for SMM modules which use legacy or deprecated protocols',
