@@ -12,7 +12,7 @@ from yattag import Doc
 def compact(outdir, outfile, clean=False):
     results = []
 
-    for module in (pathlib.Path(module).resolve() for module in glob.glob(f'{outdir}\\*.i64')):
+    for module in (pathlib.Path(module).resolve() for module in glob.glob(f'{outdir}\\*.efi')):
         try:
             report = module.with_suffix('.brick')
             data = open(report, 'r').read()
@@ -37,18 +37,40 @@ def compact(outdir, outfile, clean=False):
                 text(f'SUMMARY OF SCAN RESULTS')
 
         for x in results:
-            with tag('a', href=x[0]):
-                text(x[0])
-            with tag('ul'):
-                for line in x[1].splitlines():
-                    level = line.split()[0]
-                    color = COLORS.get(level, 'black')
-                    with tag('li', style=f'color:{color}'):
-                        text(line)
+            with tag('table', border='2px solid black', style='width:100%'):
+                with tag('tr'):
+                    with tag('th', colspan='3'):
+                        text(x[0])
+                with tag('tr'):
+                    with tag('td', colspan='3'):
+                        with tag('ul'):
+                            for line in x[1].splitlines():
+                                level = line.split()[0]
+                                color = COLORS.get(level, 'black')
+                                with tag('li', style=f'color:{color}'):
+                                    text(line)
+                with tag('tr'):
+                    with tag('td'):
+                        text('IDA database: ')
+                        idb = x[0].replace('.efi', '.i64')
+                        with tag('a', href=idb):
+                            text(idb)
+                    with tag('td'):
+                        text('IDA log: ')
+                        log = x[0].replace('.efi', '.log')
+                        with tag('a', href=log):
+                            text(log)
+                    with tag('td'):
+                        text('efiXplorer log: ')
+                        json = x[0].replace('.efi', '.json')
+                        with tag('a', href=json):
+                            text(json)
+            with tag('br'):
+                pass
 
     open(outfile, 'w').write(doc.getvalue())
 
-def main(rom, outdir, modules, verbose=False):
+def analyze(rom, outdir, modules, verbose=False):
     with log_step('Building GUIDs database'):
         db = GuidsDatabase()
     
@@ -73,11 +95,14 @@ def main(rom, outdir, modules, verbose=False):
         with log_step(BRICK_ODULES_DESCRIPTIONS[mod]):
             hunter.run_script(bootstrap_script, mod)
 
-    # Merge all individual output files into one file.
+    # Merge all individual output files into one report file, formatted as HTML.
+    html_report = f'{rom}.html'
     with log_step('Compacting output files'):
-        compact(outdir, f'{rom}.html')
+        compact(outdir, html_report)
 
-if __name__ == '__main__':
+    return html_report
+
+def main():
     parser = argparse.ArgumentParser()
     
     parser.add_argument('rom', help='Path to firmware image to analyze')
@@ -90,6 +115,9 @@ if __name__ == '__main__':
         args.outdir = f'{args.rom}.output'
 
     with log_timing(f'Analyzing {args.rom}'):
-        main(args.rom, args.outdir, args.modules, args.verbose)
+        report = analyze(args.rom, args.outdir, args.modules, args.verbose)
 
-    log_operation(f'Check the resulting output file at {args.rom}.html')
+    log_operation(f'Check the resulting report file at {report}')
+
+if __name__ == '__main__':
+    main()
