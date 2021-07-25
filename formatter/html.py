@@ -27,9 +27,9 @@ def format(outdir, outfile, clean=False):
 
     doc, tag, text = Doc().tagtext()
     with tag('html'):
-        with tag('script'):
-            checkbox_script = Path(__file__).parent / 'checkbox.js'
-            doc.asis(open(checkbox_script, 'r').read())
+        # with tag('script'):
+        #     checkbox_script = Path(__file__).parent / 'checkbox.js'
+        #     doc.asis(open(checkbox_script, 'r').read())
 
         with tag('body', onload='javascript:init()'):
             with tag('h1'):
@@ -48,9 +48,9 @@ def format(outdir, outfile, clean=False):
                                 id += 1
                                 level = line.split()[0]
                                 color = COLORS.get(level, 'black')
-                                if level == 'ERROR':
-                                    with tag('input', type='checkbox', id=f'checkbox_{id}', onchange=f'javascript:do_strikethrough(this, {id})'):
-                                        pass
+                                # if level == 'ERROR':
+                                #     with tag('input', type='checkbox', id=f'checkbox_{id}', onchange=f'javascript:do_strikethrough(this, {id})'):
+                                #         pass
                                 with tag('li', id=f'li_{id}', style=f'color:{color}'):
                                     text(line)
                             
