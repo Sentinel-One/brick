@@ -12,6 +12,9 @@ from bip.hexrays import *
 
 from .. import brick_utils
 
+class StopCNodeVisit(Exception):
+    pass
+
 class SmmBufferValidModule(BaseModule):
 
     SIGDIR = Path(__file__).parent / r"sig"
@@ -46,24 +49,60 @@ class SmmBufferValidModule(BaseModule):
         else:
             return []
 
+    def _is_interesting_comm_buffer_smi(self, f: BipFunction):
+        if f.can_decompile:
+            cfunc = HxCFunc.from_addr(f.ea)
+            # Do some sanity checks on the arguments.
+            if len(cfunc.args) != 4 or cfunc.args[2].name != 'CommBuffer' or cfunc.args[3].name != 'CommBufferSize':
+                return False
+            
+            # TODO: Search for xRefs to the arguments.
+            return cfunc.cstr.count('CommBuffer') > 2
+        else:
+            # Can't decompile for some reason, just make sure it's not a stub.
+            return f.size >= self.HANDLER_SIZE_THRESHOLD
+
+    def _is_interesting_legacy_smi(self, f: BipFunction):
+        for rss in self.read_save_state_calls():
+            if brick_utils.path_exists(f, rss):
+                # The SMI handler calls ReadSaveState().
+                return True
+
+        for gv in self.get_variable_calls():
+            if brick_utils.path_exists(f, gv):
+                # The SMI handler calls GetVariable().
+                return True
+
+        if f.can_decompile:
+
+            def callback(cn):
+                if isinstance(cn, CNodeExprCall):
+                    if any(x in cn.cstr for x in ('GetVariable', 'SmmGetVariable', 'ReadSaveState')):
+                        # Calls one of {GetVariable, SmmGetVariable, ReadSaveState}.
+                        raise StopCNodeVisit()
+
+                if isinstance(cn, CNodeExprMemptr):
+                    if 'CpuSaveState' in cn.cstr:
+                        # Reads the SMM save state directly via gSmst->CpuSaveState[CpuIndex].
+                        raise StopCNodeVisit()
+
+            cfunc = HxCFunc.from_addr(f.ea)
+            try:
+                cfunc.visit_cnode_filterlist(callback, [CNodeExprCall, CNodeExprMemptr])
+            except StopCNodeVisit:
+                # An 'interesting' element was found via the Hex-Rays pseudocode.
+                return True
+
+        return False
+
     def is_interesting_smi_handler(self, f: BipFunction):
-        if f.name.startswith('Handler') and f.size >= self.HANDLER_SIZE_THRESHOLD:
+        if f.name.startswith('Handler'):
             # CommBuffer based SMI.
-            return True
+            return self._is_interesting_comm_buffer_smi(f)
 
         if f.name.startswith('SwSmiHandler'):
             # Legacy software SMI.
-            for rss in self.read_save_state_calls():
-                if brick_utils.path_exists(f, rss):
-                    # The SMI handler calls ReadSaveState().
-                    return True
-
-            for gv in self.get_variable_calls():
-                if brick_utils.path_exists(f, gv):
-                    # The SMI handler calls GetVariable().
-                    return True
-
-        return False
+            return self._is_interesting_legacy_smi(f)
 
     def _get_interesting_smi_handlers(self):
         all_smis = self._get_smi_handlers()
