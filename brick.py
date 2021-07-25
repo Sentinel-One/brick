@@ -13,11 +13,15 @@ def compact(outdir, outfile, clean=False):
     results = []
 
     for module in (pathlib.Path(module).resolve() for module in glob.glob(f'{outdir}\\*.i64')):
-        report = module.with_suffix('.brick')
-        data = open(report, 'r').read()
-        results.append((str(module), data))
-            
-        if clean: os.remove(report)
+        try:
+            report = module.with_suffix('.brick')
+            data = open(report, 'r').read()
+            results.append((str(module), data))
+                
+            if clean: os.remove(report)
+        except Exception as e:
+            log_warning(f'Failed processing {module}, exception {e}')
+            continue
         
     COLORS = {
         'ERROR': 'red',
