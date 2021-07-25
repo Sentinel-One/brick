@@ -77,11 +77,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
     parser.add_argument('rom', help='Path to firmware image to analyze')
-    parser.add_argument('-o', '--outdir', default='output', help='Path to output directory')
-    parser.add_argument('-m', '--modules', nargs='*', help='Module to execute (default: all)', choices=AVAILABLE_MODULE_NAMES)
+    parser.add_argument('-o', '--outdir', help='Path to output directory')
+    parser.add_argument('-m', '--modules', nargs='*', help='Module to execute (default: all)', choices=BRICK_MODULES_NAMES)
     parser.add_argument('-v', '--verbose', action='store_true', help='Use more verbose traces')
     
     args = parser.parse_args()
+    if args.outdir is None:
+        args.outdir = f'{args.rom}.output'
 
     with log_timing(f'Analyzing {args.rom}'):
         main(args.rom, args.outdir, args.modules, args.verbose)
