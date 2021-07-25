@@ -1,4 +1,4 @@
-AVAILABLE_MODULE_NAMES = (
+BRICK_MODULES_NAMES = (
     'efiXplorer',
     'smm_buffer',
     'legacy_protocols',
@@ -7,7 +7,7 @@ AVAILABLE_MODULE_NAMES = (
     'setvar_infoleak',
 )
 
-MODULE_DESCRIPTIONS = {
+BRICK_ODULES_DESCRIPTIONS = {
     'efiXplorer': 'Analyzing a SMM binary with efiXplorer',
     'smm_buffer': 'Scanning for SMI handlers not calling SmmIsBufferOutsideSmmValid() or equivalent on the CommBuffer',
     'legacy_protocols': 'Scanning for SMM modules which use legacy or deprecated protocols',
@@ -32,7 +32,7 @@ if in_ida:
     from .buffer_outside_smm.check_buffer_outside_smm import SmmBufferValidModule
     from .setvar_infoleak.setvar_infoleak import SetVarInfoLeakModule
 
-    MODULE_CLASSES = {
+    BRICK_MODULES_CLASSES = {
         'efiXplorer': EfiXplorerModule,
         'smm_buffer': SmmBufferValidModule,
         'legacy_protocols': LegacyProtocolsModule,

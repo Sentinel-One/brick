@@ -5,7 +5,7 @@ from guids.guids_db import GuidsDatabase
 from hunter import Hunter
 import glob
 from logger import log_step, log_operation, log_timing, log_warning
-from modules import AVAILABLE_MODULE_NAMES, MODULE_DESCRIPTIONS
+from modules import BRICK_MODULES_NAMES, BRICK_ODULES_DESCRIPTIONS
 from harvest.utils import harvest
 from yattag import Doc
 
@@ -61,12 +61,12 @@ def main(rom, outdir, modules, verbose=False):
         hunter.cleanup()
 
     if modules is None:
-        modules = AVAILABLE_MODULE_NAMES
+        modules = BRICK_MODULES_NAMES
 
     bootstrap_script = pathlib.Path(__file__).parent / 'bootstrap.py'
 
     for mod in modules:
-        with log_step(MODULE_DESCRIPTIONS[mod]):
+        with log_step(BRICK_ODULES_DESCRIPTIONS[mod]):
             hunter.run_script(bootstrap_script, mod)
 
     # Merge all individual output files into one file.

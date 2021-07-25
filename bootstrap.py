@@ -1,13 +1,13 @@
 
 from contextlib import contextmanager
 import idaapi
-idaapi.require('modules.base_module')
-idaapi.require('modules.setvar_infoleak.setvar_infoleak')
-idaapi.require('modules.setvar_infoleak')
-idaapi.require('modules')
-idaapi.require('brick_utils')
+idaapi.require('modules.buffer_outside_smm.check_buffer_outside_smm')
+# idaapi.require('modules.setvar_infoleak.setvar_infoleak')
+# idaapi.require('modules.setvar_infoleak')
+# idaapi.require('modules')
+# idaapi.require('brick_utils')
 
-from modules import AVAILABLE_MODULE_NAMES, MODULE_CLASSES
+from modules import BRICK_MODULES_NAMES, BRICK_MODULES_CLASSES
 import idc
 import ida_kernwin
 import pathlib
@@ -16,8 +16,8 @@ import logging
 
 def prompt_interactive_for_module_name():
     while True:
-        mod_name = ida_kernwin.ask_text(0, None, 'Enter module name, one of {}'.format(AVAILABLE_MODULE_NAMES))
-        if mod_name in AVAILABLE_MODULE_NAMES:
+        mod_name = ida_kernwin.ask_text(0, None, 'Enter module name, one of {}'.format(BRICK_MODULES_NAMES))
+        if mod_name in BRICK_MODULES_NAMES:
             break
     return [mod_name]
 
@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
     with setup_brick_logger():
         for module in modules:
-            mod_cls = MODULE_CLASSES[module]
+            mod_cls = BRICK_MODULES_CLASSES[module]
             mod_obj = mod_cls()
             mod_obj.execute()
 
