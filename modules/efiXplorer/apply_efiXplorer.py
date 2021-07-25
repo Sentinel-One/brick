@@ -19,6 +19,7 @@ class EfiXplorerModule(BaseModule):
         EFI_SMM_SW_CONTEXT * CommBuffer,
         UINTN * CommBufferSize)""")
 
+    # arg = 1 (01): disable_ui
     DISABLE_UI = 1
 
     EFI_SMM_RUNTIME_SERVICES_TABLE_GUID = uuid.UUID('{395C33FE-287F-413E-A055-8088C0E1D43E}')
@@ -106,9 +107,37 @@ class EfiXplorerModule(BaseModule):
         # Find functions that the initial auto-analysis might have missed.
         self.find_missing_functions()
 
+    @staticmethod
+    def _handle_read_save_state_call(cn):
+        brick_utils.set_indirect_call_type(cn.ea, 'EFI_SMM_READ_SAVE_STATE')
+        cn.hxcfunc.invalidate_cache()
+        
+        reg = cn.get_arg(2)
+        reg_name = reg.cstr.split('_')[5].lower()   # e.g. EFI_SMM_SAVE_STATE_REGISTER_RCX
+
+        buffer = cn.get_arg(4)
+        if isinstance(buffer, CNodeExprRef):
+            # if we have a ref (&something) we want the object under
+            buffer = buffer.ops[0].ignore_cast
+        if isinstance(buffer, CNodeExprVar):
+            buffer.lvar.name = 'v_' + reg_name
+
+
+    @staticmethod
+    def _handle_write_save_state_call(cn):
+        pass
+
+    @staticmethod
+    def _handle_get_variable_call(cn):
+        pass
+
+    @staticmethod
+    def _handle_set_variable_call(cn):
+        pass
+
     def fix_efi_services_signatures(self):
 
-        EFI_SERVICES_SIGNATURES = {
+        EFI_SERVICES_PROTOTYPES = {
             'ReadSaveState': 'EFI_SMM_READ_SAVE_STATE',
             'WriteSaveState': 'EFI_SMM_WRITE_SAVE_STATE',
             'GetVariable': 'EFI_GET_VARIABLE',
@@ -118,9 +147,34 @@ class EfiXplorerModule(BaseModule):
         }
 
         def callback(cn: CNodeExprCall):
-            for service, signature in EFI_SERVICES_SIGNATURES.items():
+            for service, prototype in EFI_SERVICES_PROTOTYPES.items():
                 if '->' + service in cn.cstr:
-                    brick_utils.set_indirect_call_type(cn.ea, signature)
+                    brick_utils.set_indirect_call_type(cn.ea, prototype)
+                    cn.hxcfunc.invalidate_cache()
+
+        for f in BipFunction.iter_all():
+            try:
+                cfunc = HxCFunc.from_addr(f.ea)
+                cfunc.visit_cnode_filterlist(callback, [CNodeExprCall])
+            except Exception as e:
+                self.logger.debug(e)
+
+    def rename_efi_services_arguments(self):
+
+        EFI_SERVICES_HANDLERS = {
+            'ReadSaveState': EfiXplorerModule._handle_read_save_state_call,
+            'WriteSaveState': EfiXplorerModule._handle_write_save_state_call,
+            'GetVariable': EfiXplorerModule._handle_get_variable_call,
+            'SmmGetVariable': EfiXplorerModule._handle_get_variable_call,
+            'SetVariable': EfiXplorerModule._handle_set_variable_call,
+            'SmmSetVariable': EfiXplorerModule._handle_set_variable_call,
+        }
+
+        def callback(cn: CNodeExprCall):
+            for service, handler in EFI_SERVICES_HANDLERS.items():
+                if '->' + service in cn.cstr:
+                    handler(cn)
+                    cn.hxcfunc.invalidate_cache()
 
         for f in BipFunction.iter_all():
             try:
@@ -134,11 +188,11 @@ class EfiXplorerModule(BaseModule):
         self.fix_sw_smis_signatures()
         # Fix signatures for common EFI/SMM services that efiXplorer missed.
         self.fix_efi_services_signatures()
+        self.rename_efi_services_arguments()
 
     def run(self):
         self.preprocess()
 
-        # arg = 1 (01): disable_ui
         ida_loader.load_and_run_plugin(str(self.plugin_path), self.DISABLE_UI)
         
         self.postprocess()
