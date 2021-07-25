@@ -67,7 +67,6 @@ class EfiXplorerModule(BaseModule):
         # 2. Assemble a bunch of int 3 opcodes into their own function.
         # We attempt to fix these issues by re-creating some of the functions.
         for f in BipFunction.iter_all():
-            print(f'In func {f}')
             new_ea = f.ea
             while new_ea < f.end and BipInstr(new_ea).bytes == [0xCC]: # int 3
                 # Counts the number of int 3
@@ -76,13 +75,10 @@ class EfiXplorerModule(BaseModule):
             if new_ea != f.ea:
                 if new_ea == f.end:
                     # Delete 'functions' comprising entirely out of int 3 instructions.
-                    print(f'Deleting {f}')
                     idc.del_func(f.ea)
                 else:
                     # Re-create functions 
-                    print(f'Deleting {f}')
                     idc.del_func(f.ea)
-                    print(f'Re-creating {new_ea:x}')
                     BipFunction.create(new_ea)
 
     def propagate_vulns(self):
