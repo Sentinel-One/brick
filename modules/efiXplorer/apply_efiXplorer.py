@@ -109,7 +109,11 @@ class EfiXplorerModule(BaseModule):
 
     @staticmethod
     def _handle_read_save_state_call(cn):
-        reg = cn.get_arg(2)
+        reg = cn.get_arg_intval(2)
+        if reg is None:
+            # Argument is not a literal.
+            return
+            
         reg_name = reg.cstr.split('_')[5].lower()   # e.g. EFI_SMM_SAVE_STATE_REGISTER_RCX
 
         buffer = cn.get_arg(4)
