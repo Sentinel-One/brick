@@ -40,7 +40,10 @@ def path_exists(x, y):
     return bool(AlleyCat(x, y).paths + AlleyCat(y, x).paths)
 
 def set_indirect_call_type(ea, t):
+    # standard call:
     # call    qword ptr [reg+off]
+    # or tail call:
+    # jmp     qword ptr [reg+off]
     instr = BipInstr(ea)
-    assert instr.mnem == 'call'
+    assert instr.mnem in ('call', 'jmp'), f'Unexpected instruction {instr.mnem} at 0x{ea:x}'
     instr.op(0).type_info = t
