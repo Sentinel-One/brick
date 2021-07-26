@@ -109,9 +109,6 @@ class EfiXplorerModule(BaseModule):
 
     @staticmethod
     def _handle_read_save_state_call(cn):
-        brick_utils.set_indirect_call_type(cn.ea, 'EFI_SMM_READ_SAVE_STATE')
-        cn.hxcfunc.invalidate_cache()
-        
         reg = cn.get_arg(2)
         reg_name = reg.cstr.split('_')[5].lower()   # e.g. EFI_SMM_SAVE_STATE_REGISTER_RCX
 
