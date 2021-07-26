@@ -13,7 +13,7 @@ def harvest(rom, outdir, guids_dict=None):
 
     os.mkdir(outdir)
 
-    for cls in (SingleFileHarvester, NativePythonHarvester, UefiToolHarvester):
+    for cls in (NativePythonHarvester, UefiToolHarvester, SingleFileHarvester):
         log_operation(f"Trying to harvest SMM modules using '{cls.__name__}'")
 
         try:
