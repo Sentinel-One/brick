@@ -24,12 +24,8 @@ class PostprocessorModule(BaseModule):
             if x is not None:
                 x.set_call_type()
 
-        for f in BipFunction.iter_all():
-            if not f.can_decompile:
-                continue
-            
+        for cfunc in HxCFunc.iter_all():
             try:
-                cfunc = HxCFunc.from_addr(f.ea)
                 cfunc.visit_cnode_filterlist(set_call_type_callback, [CNodeExprCall])
             except Exception as e:
                 self.logger.debug(e)
@@ -44,16 +40,11 @@ class PostprocessorModule(BaseModule):
             x.process()
             cn.hxcfunc.invalidate_cache()
 
-        for f in BipFunction.iter_all():
+        for cfunc in HxCFunc.iter_all():
             try:
-                cfunc = HxCFunc.from_addr(f.ea)
                 cfunc.visit_cnode_filterlist(callback, [CNodeExprCall])
             except Exception as e:
                 self.logger.debug(e)
-                import traceback
-                import sys
-                tb = sys.exc_info()[2]
-                self.logger.error(traceback.format_tb(tb))
     
     def run(self):
         # Apply correct signature to all SW SMI handlers.
