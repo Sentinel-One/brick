@@ -42,8 +42,8 @@ class LocateProtocolCall(UefiCall):
         try:
             interface_pointer_type = BipType.from_c(f'{protocol_name} *')
         except RuntimeError:
-            # The pointer type is not recognized, nothing to do about it.
-            pass
-        else:
-            set_cnode_type(interface, interface_pointer_type)
+            # The pointer type is not recognized, set to PVOID.
+            interface_pointer_type = BipType.from_c('void *')
+
+        set_cnode_type(interface, interface_pointer_type)
 
