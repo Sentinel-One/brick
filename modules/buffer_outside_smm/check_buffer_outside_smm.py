@@ -132,9 +132,8 @@ class SmmBufferValidModule(BaseModule):
             elt = BipElt(found.ea)
             elt.name = "AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID"
 
-            for func in BipFunction.iter_all():
+            for cfunc in HxCFunc.iter_all():
                 try:
-                    cfunc = HxCFunc.from_addr(func.ea)
                     cfunc.visit_cnode_filterlist(call_node_callback, [CNodeExprCall])
                 except Exception as e:
                     self.logger.debug(e)

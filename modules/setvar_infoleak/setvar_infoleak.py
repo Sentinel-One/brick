@@ -29,9 +29,8 @@ class SetVarInfoLeakModule(BaseModule):
                 brick_utils.set_indirect_call_type(cnode.ea, self.SET_VARIABLE_PROTOTYPE)
                 cnode.hxcfunc.invalidate_cache()
 
-        for func in BipFunction.iter_all():
+        for hxf in HxCFunc.iter_all():
             try:
-                hxf = HxCFunc.from_addr(func.ea)
                 hxf.visit_cnode_filterlist(_call_node_callback, [CNodeExprCall])
             except Exception as e:
                 self.logger.debug(e)
@@ -67,9 +66,8 @@ class SetVarInfoLeakModule(BaseModule):
             if "->SetVariable" in cn.cstr or '->SmmSetVariable' in cn.cstr:
                 self.SetVariable_calls.append(cn)
 
-        for func in BipFunction.iter_all():
+        for hxf in HxCFunc.iter_all():
             try:
-                hxf = HxCFunc.from_addr(func.ea)
                 hxf.visit_cnode_filterlist(callback, [CNodeExprCall])
             except Exception as e:
                 self.logger.debug(e)
