@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+from typing import Iterable
 import uuid
 
 from ..base_module import BaseModule
@@ -38,21 +39,44 @@ class EfiXplorerModule(BaseModule):
         with open(json_report_path, 'r') as f:
             return json.load(f)
 
+    def get_smi_handlers(self):
+        return BipFunction.get_by_prefix('SwSmiHandler') + BipFunction.get_by_prefix("Handler")
+
+    @staticmethod
+    def format_path(addresses: Iterable):
+        path = ''
+        for address in addresses[:-1]:
+            path += BipFunction(address).name
+            path += '->'
+        path += hex(addresses[-1])
+        return path
+
+    def handle_smm_callouts(self, callouts):
+        for callout in callouts:
+            for smi in self.get_smi_handlers():
+                paths = brick_utils.get_paths(smi, callout)
+                for path in paths:
+                    self.logger.error(f'Vulnerable path from {smi} to {callout}')
+                    self.logger.error(self.format_path(path))
+
+        if brick_utils.search_guid(self.EFI_SMM_RUNTIME_SERVICES_TABLE_GUID):
+            self.logger.info('Module references EFI_SMM_RUNTIME_SERVICES_TABLE_GUID, call-outs likely to be false positive')
+        else:
+            self.logger.warning('Module does not reference EFI_SMM_RUNTIME_SERVICES_TABLE_GUID, call-outs might be true positives')
+
     def propagate_vulns(self):
         vulns = self.json_report().get('vulns', [])
         if vulns:
             self.res = False
 
         for vuln_name in vulns:
+            addresses = [ea for ea in self.json_report()['vulns'][vuln_name]]
             # In JSON all integers must be written in decimal radix. Convert them to hex for enhanched readability.
-            addresses = [hex(ea) for ea in self.json_report()['vulns'][vuln_name]]
-            self.logger.error(f'{vuln_name} occuring at {addresses}')
+            hex_addresses = [hex(ea) for ea in addresses]
+            self.logger.error(f'{vuln_name} occuring at {hex_addresses}')
 
             if vuln_name == 'smm_callout':
-                if brick_utils.search_guid(self.EFI_SMM_RUNTIME_SERVICES_TABLE_GUID):
-                    self.logger.info('Module references EFI_SMM_RUNTIME_SERVICES_TABLE_GUID, call-outs likely to be false positive')
-                else:
-                    self.logger.warning('Module does not reference EFI_SMM_RUNTIME_SERVICES_TABLE_GUID, call-outs might be true positives')
+                self.handle_smm_callouts(addresses)
         
         if self.res:
             self.logger.success("efiXplorer didn't detect any vulnerabilities")
