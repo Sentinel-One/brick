@@ -1,4 +1,4 @@
-BRICK_MODULES_NAMES = (
+BRICK_FULL_RUN_MODULES = (
     'preprocessor',
     'efiXplorer',
     'postprocessor',
@@ -6,6 +6,15 @@ BRICK_MODULES_NAMES = (
     'legacy_protocols',
     'is_edk2',
     'cseg',
+    'setvar_infoleak',
+)
+
+# A subset of all modules.
+BRICK_QUICK_RUN_MODULES = (
+    'preprocessor',
+    'efiXplorer',
+    'postprocessor',
+    'smm_buffer',
     'setvar_infoleak',
 )
 
