@@ -27,7 +27,7 @@ class LocateProtocolCall(UefiCall):
 
         # We expect the protocol GUID to be a global variable.
         if not isinstance(protocol, CNodeExprObj):
-            raise TypeError(f"Unexpected CNode type for 'Protocol': f{type(protocol)}")
+            return
 
         # Get a friendly name for the protocol.
         # For example, use just EFI_SMM_VARIABLE_PROTOCOL instead of EFI_SMM_VARIABLE_PROTOCOL_GUID_8A40.
