@@ -1,6 +1,6 @@
-from ..base import UefiCall
+from ..base import CNodeExprIndirectCall
 
-class SetVariableCall(UefiCall):
+class SetVariableCall(CNodeExprIndirectCall):
     """"Represents a call to SetVariable()"""
     
     PROTOTYPE = 'EFI_SET_VARIABLE'

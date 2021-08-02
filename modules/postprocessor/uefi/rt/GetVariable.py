@@ -1,6 +1,6 @@
-from ..base import UefiCall
+from ..base import CNodeExprIndirectCall
 
-class GetVariableCall(UefiCall):
+class GetVariableCall(CNodeExprIndirectCall):
     """"Represents a call to GetVariable()"""
     
     PROTOTYPE = 'EFI_GET_VARIABLE'

@@ -1,8 +1,8 @@
-from ..base import UefiCall, set_cnode_name, set_cnode_type
+from ...base import CNodeExprIndirectCall, set_cnode_name, set_cnode_type
 
 from bip.hexrays import *
 
-class ReadSaveStateCall(UefiCall):
+class ReadSaveStateCall(CNodeExprIndirectCall):
     """Represents a call to ReadSaveState()"""
 
     PROTOTYPE = 'EFI_SMM_READ_SAVE_STATE'

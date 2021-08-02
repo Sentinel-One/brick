@@ -4,7 +4,7 @@ from bip.hexrays import *
 
 def set_cnode_name(cnode, name: str):
     # Convert to CamelCase.
-    name = name.title().replace('_', '')
+    # name = name.title().replace('_', '')
 
     if isinstance(cnode, CNodeExprRef):
         # If we have a ref (&something) we want the object under.
@@ -13,23 +13,20 @@ def set_cnode_name(cnode, name: str):
     if isinstance(cnode, CNodeExprVar):
         cnode.lvar.name = 'v_' + name
     elif isinstance(cnode, CNodeExprObj):
-        GetElt(cnode.value).name = 'g_' + name
-    else:
-        raise TypeError(f'Unsupported CNode type {type(cnode)}')
+        GetElt(cnode.value).name = f'g_{name}_{hex(cnode.ea)}'
 
 def set_cnode_type(cnode, t: BipType):
     if isinstance(cnode, CNodeExprRef):
         # If we have a ref (&something) we want the object under.
         cnode = cnode.ops[0].ignore_cast
-    
     if isinstance(cnode, CNodeExprVar):
         cnode.lvar.type = t
     elif isinstance(cnode, CNodeExprObj):
         t.set_at(cnode.value)
-    else:
-        raise TypeError(f'Unsupported CNode type {type(cnode)}')
 
-class UefiCall(CNodeExprCall):
+class CNodeExprIndirectCall(CNodeExprCall):
+    '''Same as CNodeExprCall, but allows to set the type of an indirect function call.
+    '''
 
     @classmethod
     def from_cnode(cls, cnode):
@@ -47,10 +44,10 @@ class UefiCall(CNodeExprCall):
         # call    qword ptr [reg+off]
         # or tail call:
         # jmp     qword ptr [reg+off]
-        assert instr.mnem in ('call', 'jmp'), f'Unexpected instruction {instr.mnem} at 0x{instr.ea:x}'
+        if instr.mnem not in ('call', 'jmp'):
+            raise ValueError(f'Unexpected instruction {instr.mnem} at 0x{instr.ea:x}')
 
         instr.op(0).type_info = self.PROTOTYPE
-        self.hxcfunc.invalidate_cache()
 
     def process(self):
         pass

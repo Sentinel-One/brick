@@ -1,8 +1,9 @@
-from ..base import UefiCall, set_cnode_name, set_cnode_type
+from ..base import CNodeExprIndirectCall, set_cnode_name, set_cnode_type
+
 from bip.base import *
 from bip.hexrays import *
 
-class LocateProtocolCall(UefiCall):
+class LocateProtocolCall(CNodeExprIndirectCall):
     """Represents a call to LocateProtocol()"""
 
     PROTOTYPE = 'EFI_LOCATE_PROTOCOL'
