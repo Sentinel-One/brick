@@ -19,6 +19,9 @@ class EfiXplorerModule(BaseModule):
 
     EFI_SMM_RUNTIME_SERVICES_TABLE_GUID = uuid.UUID('{395C33FE-287F-413E-A055-8088C0E1D43E}')
 
+    LEGACY_SW_SMI_PREFIX = 'SwSmiHandler'
+    COMM_BUFFER_SMI_NAME = 'Handler'
+
     @property
     def plugin_path(self):
         parent_dir = Path(__file__).parent
@@ -56,8 +59,7 @@ class EfiXplorerModule(BaseModule):
             for smi in self.get_smi_handlers():
                 paths = brick_utils.get_paths(smi, callout)
                 for path in paths:
-                    self.logger.error(f'Vulnerable path from {smi} to {callout}')
-                    self.logger.error(self.format_path(path))
+                    self.logger.verbose(self.format_path(path))
 
         if brick_utils.search_guid(self.EFI_SMM_RUNTIME_SERVICES_TABLE_GUID):
             self.logger.info('Module references EFI_SMM_RUNTIME_SERVICES_TABLE_GUID, call-outs likely to be false positive')

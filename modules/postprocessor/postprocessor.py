@@ -5,6 +5,12 @@ from .uefi.factory import factory
 from .. import brick_utils
 from ..base_module import BaseModule
 
+from .uefi.bs import EfiBootServices
+from .uefi.rt import EfiRuntimeServices
+from .uefi.smm.cpu import SmmCpuCallsFactory
+from .uefi.smm.access2 import SmmAccess2Protocol
+from .uefi.smm.smst import SmstFactory
+
 class PostprocessorModule(BaseModule):
 
     EFI_SMM_HANDLER_ENTRY_POINT = BipType.from_c("""EFI_STATUS (f)(
@@ -19,37 +25,14 @@ class PostprocessorModule(BaseModule):
 
     def _fix_efi_services_signatures(self):
 
-        def set_call_type_callback(cn: CNodeExprCall):
-            x = factory.get_call(cn)
-            if x is not None:
-                x.set_call_type()
+        SmstFactory.process_calls()
+        EfiBootServices.process_calls()
+        EfiRuntimeServices.process_calls()
+        SmmCpuCallsFactory.process_calls()
+        SmmAccess2Protocol.process_calls()
 
-        for cfunc in HxCFunc.iter_all():
-            try:
-                cfunc.visit_cnode_filterlist(set_call_type_callback, [CNodeExprCall])
-            except Exception as e:
-                self.logger.debug(e)
-
-    def _rename_efi_services_arguments(self):
-
-        def callback(cn: CNodeExprCall):
-            x = factory.get_call(cn)
-            if x is None:
-                return
-            
-            x.process()
-            cn.hxcfunc.invalidate_cache()
-
-        for cfunc in HxCFunc.iter_all():
-            try:
-                cfunc.visit_cnode_filterlist(callback, [CNodeExprCall])
-            except Exception as e:
-                self.logger.debug(e)
-    
     def run(self):
         # Apply correct signature to all SW SMI handlers.
         self._fix_sw_smis_signatures()
         # Fix signatures for common EFI/SMM services that efiXplorer missed.
         self._fix_efi_services_signatures()
-        # Rename some arguments accordingly.
-        self._rename_efi_services_arguments()
