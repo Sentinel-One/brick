@@ -4,3 +4,4 @@ colorama
 find-ida-user-dir
 yattag
 pefile
+gorilla
