@@ -1,6 +1,12 @@
 import uuid
 from bip.base import *
+from bip.hexrays import *
 from alleycat import AlleyCat
+from contextlib import contextmanager
+import os
+from pathlib import Path
+import copy
+import gorilla
 
 def search_bytes(byt, min_ea=None, max_ea=None):
     if min_ea is None: min_ea = BipIdb.min_ea()
@@ -25,10 +31,10 @@ def get_wstring(ea):
     wstr = BipData.get_bytes(ea, size).replace(b'\x00', b'')
     return wstr
 
-def path_exists(x, y):
+def get_paths(x, y, bidirectional=True):
     # Returns True iff there is a path between the two nodes.
     if (x is None) or (y is None):
-        return False
+        return []
 
     if hasattr(x, 'ea'):
         x = x.ea
@@ -36,8 +42,16 @@ def path_exists(x, y):
     if hasattr(y, 'ea'):
         y = y.ea
 
+    paths = AlleyCat(x, y).paths
+    
     # Paths are symmetric.
-    return bool(AlleyCat(x, y).paths + AlleyCat(y, x).paths)
+    if bidirectional:
+        paths += AlleyCat(y, x).paths
+
+    return paths
+
+def path_exists(x, y):
+    return bool(get_paths(x, y))
 
 def set_indirect_call_type(ea, t):
     # standard call:
@@ -47,3 +61,39 @@ def set_indirect_call_type(ea, t):
     instr = BipInstr(ea)
     assert instr.mnem in ('call', 'jmp'), f'Unexpected instruction {instr.mnem} at 0x{ea:x}'
     instr.op(0).type_info = t
+
+@contextmanager
+def set_directory(path: Path):
+    """Sets the cwd within the context
+
+    Args:
+        path (Path): The path to the cwd
+
+    Yields:
+        None
+    """
+
+    origin = Path().absolute()
+    try:
+        os.chdir(path)
+        yield
+    finally:
+        os.chdir(origin)
+
+@contextmanager
+def temp_patch(destination, name, obj):
+    settings = gorilla.Settings(allow_hit=True)
+    patch = gorilla.Patch(destination, name, obj, settings)
+    try:
+        gorilla.apply(patch)
+        yield
+    finally:
+        gorilla.revert(patch)
+
+@contextmanager
+def temp_env():
+    original_env = copy.deepcopy(os.environ)
+    try:
+        yield
+    finally:
+        os.environ = original_env
