@@ -5,4 +5,4 @@ from .WriteSaveState import WriteSaveStateCall
 
 SmmCpuCallsFactory = UefiCallFactory()
 SmmCpuCallsFactory.register('ReadSaveState',    ReadSaveStateCall)
-SmmCpuCallsFactory.register('WriteSaveState',   WriteSaveState)
+SmmCpuCallsFactory.register('WriteSaveState',   WriteSaveStateCall)
