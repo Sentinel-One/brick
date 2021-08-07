@@ -14,6 +14,9 @@ class SmiHandlerRegisterCall(CNodeExprIndirectCall):
         void * CommBuffer,
         UINTN * CommBufferSize)""")
 
+    # Cb stands for Communication Buffer
+    COMM_BUFFER_SMI_PREFIX = 'CbSmiHandler'
+
     @property
     def Handler(self):
         return self.get_arg(0)
@@ -32,9 +35,7 @@ class SmiHandlerRegisterCall(CNodeExprIndirectCall):
             # unexpected
             return
 
-        # Cb stands for Communication Buffer
         ea = hex(handler.value)[2:]
-        BipElt(handler.value).name = f'CbSmiHandler_{ea}'
+        BipElt(handler.value).name = f'{self.COMM_BUFFER_SMI_PREFIX}_{ea}'
 
         self.EFI_SMM_HANDLER_ENTRY_POINT2.set_at(handler.value)
-        # print(f'type of handler is {type(handler)}')
