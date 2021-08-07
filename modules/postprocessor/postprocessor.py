@@ -31,8 +31,19 @@ class PostprocessorModule(BaseModule):
         SmmCpuCallsFactory.process_calls()
         SmmAccess2Protocol.process_calls()
 
+    def _rename_enums(self):
+        idc.import_type(-1, 'MACRO_EFI')
+        me = BipEnum.get('MACRO_EFI')
+
+        for ins in BipInstr.iter_all():
+            for (op_id, op) in enumerate(ins.ops):
+                if op.type == BipOpType.IMM and op.value & 0x8000000000000000:
+                    idc.op_enum(ins.ea, op_id, me._eid, 0)
+
     def run(self):
         # Apply correct signature to all SW SMI handlers.
         self._fix_sw_smis_signatures()
         # Fix signatures for common EFI/SMM services that efiXplorer missed.
         self._fix_efi_services_signatures()
+        # Rename EFI status codes.
+        self._rename_enums()
