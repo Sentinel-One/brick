@@ -1,6 +1,6 @@
 [submodule "idahunt"]
-	path = idahunt
+	path = brick/idahunt
 	url = https://github.com/nccgroup/idahunt
 [submodule "modules/reference_code/edk2"]
-	path = modules/reference_code/edk2
+	path = brick/modules/reference_code/edk2/edk2
 	url = https://github.com/tianocore/edk2
