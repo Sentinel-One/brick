@@ -1,0 +1,3 @@
+[submodule "brick/externals/idahunt"]
+	path = brick/externals/idahunt
+	url = https://github.com/nccgroup/idahunt.git
