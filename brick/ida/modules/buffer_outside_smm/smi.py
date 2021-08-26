@@ -47,10 +47,8 @@ class SmiHandler(BipFunction):
         AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID = '{da473d7f-4b31-4d63-92b7-3d905ef84b84}'
         ASBVP_recognizer = ProtocolRecognizer(AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID, 'AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID', is_smm=True)
 
-        SIBOSV_recognizer = FunctionRecognizer('SmmIsBufferOutsideSmmValid', is_library=True)
-
         ASBVP = ASBVP_recognizer.get().Instances
-        SIBOSV = SIBOSV_recognizer.get()
+        SIBOSV = BipFunction.get_by_name('SmmIsBufferOutsideSmmValid')
         
         candidates = ASBVP + [SIBOSV]
         if any(brick_utils.path_exists(self, candidate) for candidate in candidates):

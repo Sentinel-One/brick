@@ -1,46 +1,51 @@
-from .Differ import Diaphora
+import tempfile
+from . import diff
 from bip.base import *
 
 import os
 import rizzo
-import sqlite3
+
+import idaapi
+from pathlib import Path
+from contextlib import closing
 class FunctionRecognizer:
     
     def __init__(self, name, is_library=False):
         self.name = name
         self.is_library = is_library
 
-    def recognize_by_signature(self, sigdir):
+    def _recognize(self, f: BipFunction):
+        if f is not None:
+            f.name = self.name
+            f.is_lib = self.is_library
+
+        return f
+
+    def recognize_by_rizzo(self, sigdir):
         for sig in os.listdir(sigdir):
             sigfile = os.path.join(sigdir, sig)
             # Apply signature for SmmIsBufferOutsideSmmValid.
             rizzo.RizzoApply(sigfile)
 
-        f = self.get()
-        if f:
-            f.is_lib = self.is_library
+        return self._recognize(BipFunction.get_by_name(self.name))
 
     def recognize_by_heuristic(self, heur):
         for func in BipFunction.iter_all():
             if heur(func):
-                func.name = self.name
-                func.is_lib = self.is_library
+                return self._recognize(func)
 
-    def recognize_by_diaphora(self, other, ratio):
-        diaphora = Diaphora()
-        diaphora.export_this_idb()
-        diff_db = diaphora.calculate_diff(other)
-        print(diff_db)
-        conn = sqlite3.connect(diff_db)
-        cursor = conn.cursor()
-        results = cursor.execute(f'SELECT name FROM results WHERE name2 = "{self.name}" and CAST(ratio as FLOAT) > {ratio} ORDER by ratio DESC')
-        # Best result
-        candidate = results.fetchone()
-        print('candidate func is ', candidate)
+    def recognize_by_diaphora(self, other: str, ratio:float=1.0):
+        DIAPHORA_QUERY_FORMAT = 'SELECT name FROM results WHERE name2 = "{fname}" and CAST(ratio as FLOAT) > {ratio} ORDER by ratio DESC'
+
+        # Use Diaphora to export the current .idb to a .sqlite database
+        export_filename = str(Path(idaapi.get_input_file_path()).with_suffix('.sqlite'))
+        diff.export_this_idb(export_filename)
+
+        # Find matching functions between the two modules.
+        with closing(diff.calculate_diff(export_filename, other)) as diff_results:
+            cursor = diff_results.cursor()
+            query = DIAPHORA_QUERY_FORMAT.format(fname=self.name, ratio=ratio)
+            candidate = cursor.execute(query).fetchone()
+
         if candidate:
-            func = BipFunction.get_by_name(candidate[0])
-            func.name = self.name
-            func.is_lib = self.is_library
-
-    def get(self):
-        return BipFunction.get_by_name(self.name)
+            return self._recognize(BipFunction.get_by_name(candidate[0]))

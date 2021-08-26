@@ -97,3 +97,10 @@ def temp_env():
         yield
     finally:
         os.environ = original_env
+
+try:
+    from builtins import execfile
+except NameError:
+    def execfile(fn, globals=None, locals=None):
+        return exec(open(fn).read(), globals, locals)
+        

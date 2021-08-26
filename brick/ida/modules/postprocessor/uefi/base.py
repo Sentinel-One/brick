@@ -13,7 +13,9 @@ def set_cnode_name(cnode, name: str):
     if isinstance(cnode, CNodeExprVar):
         cnode.lvar.name = 'v_' + name
     elif isinstance(cnode, CNodeExprObj):
-        GetElt(cnode.value).name = f'g_{name}_{hex(cnode.ea)}'
+        if cnode.ea != 0xFFFFFFFF_FFFFFFFF:
+            # Bug in the Ctree?
+            GetElt(cnode.value).name = f'g_{name}_{hex(cnode.ea)}'
 
 def set_cnode_type(cnode, t: BipType):
     if isinstance(cnode, CNodeExprRef):

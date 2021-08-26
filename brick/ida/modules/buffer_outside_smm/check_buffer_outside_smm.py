@@ -39,16 +39,19 @@ class SmmBufferValidModule(BaseModule):
 
         SIBOSV_recognizer = FunctionRecognizer('SmmIsBufferOutsideSmmValid', is_library=True)
 
-        if not SIBOSV_recognizer.get():
-            SIBOSV_recognizer.recognize_by_heuristic(_SIBOSV_heuristic)
+        sibosv = SIBOSV_recognizer.recognize_by_heuristic(_SIBOSV_heuristic)
+        if sibosv:
+            return sibosv
 
-        if not SIBOSV_recognizer.get():
-            SIBOSV_recognizer.recognize_by_diaphora(r"C:\Users\carlsbad\Work\firmware\hp\SmmLockBox.efi.sqlite", 0.75)
+        sibosv = SIBOSV_recognizer.recognize_by_diaphora(r"C:\Users\carlsbad\Work\firmware\hp\SmmLockBox.efi.sqlite", 0.75)
+        if sibosv:
+            return sibosv
 
-        if not SIBOSV_recognizer.get():
-            SIBOSV_recognizer.recognize_by_signature(self.SIGDIR)
+        sibosv = SIBOSV_recognizer.recognize_by_rizzo(self.SIGDIR)
+        if sibosv:
+            return sibosv
 
-        return SIBOSV_recognizer.get()
+        return None
 
 
 
@@ -80,9 +83,7 @@ class SmmBufferValidModule(BaseModule):
                 self.logger.error(f'SMI {handler.name} does not validate the comm buffer, check for unprotected nested pointers')
 
             if res & SmiHandler.ValidationResult.HAS_NESTED_POINTERS:
-                self.logger.info(f'SMI {handler.name} has pointers nested in the comm buffer')
-            else:
-                self.logger.info(f'SMI {handler.name} does not have pointers nested in the comm buffer')
+                self.logger.warning(f'SMI {handler.name} has pointers nested in the comm buffer')
                 
             if res & SmiHandler.ValidationResult.CHECK_POTENTIAL_OVERFLOW:
                 self.logger.error(f'SMI {handler.name} does not check the size of the comm buffer, check for potential overflows')
