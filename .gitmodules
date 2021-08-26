@@ -4,3 +4,6 @@
 [submodule "brick/externals/edk2"]
 	path = brick/externals/edk2
 	url = https://github.com/tianocore/edk2.git
+[submodule "brick/externals/diaphora"]
+	path = brick/externals/diaphora
+	url = https://github.com/joxeankoret/diaphora.git
