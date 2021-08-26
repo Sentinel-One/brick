@@ -1,3 +1,6 @@
 [submodule "brick/externals/idahunt"]
 	path = brick/externals/idahunt
 	url = https://github.com/nccgroup/idahunt.git
+[submodule "brick/externals/edk2"]
+	path = brick/externals/edk2
+	url = https://github.com/tianocore/edk2.git
