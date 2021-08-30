@@ -1,5 +1,5 @@
-from ...utils.ProtocolRecognizer import ProtocolRecognizer
-from ...utils.FunctionLocator import FunctionRecognizer
+from ...utils.protocol_recognizer import ProtocolRecognizer
+from ...utils.function_locator import FunctionRecognizer
 from ..efiXplorer.apply_efiXplorer import EfiXplorerModule
 from ..postprocessor.uefi.smm.smst import SmiHandlerRegisterCall
 from ..base_module import BaseModule

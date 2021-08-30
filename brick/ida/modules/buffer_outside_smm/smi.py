@@ -1,5 +1,4 @@
-from ...utils.ProtocolRecognizer import ProtocolRecognizer
-from ...utils.FunctionLocator import FunctionRecognizer
+from ...utils.protocol_recognizer import ProtocolRecognizer
 from bip.base import *
 from bip.hexrays import *
 import ida_loader
