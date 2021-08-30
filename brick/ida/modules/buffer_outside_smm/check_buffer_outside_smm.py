@@ -14,7 +14,7 @@ from .smi import LegacySwSmiHandler, CommBufferSmiHandler, SmiHandler
 
 class SmmBufferValidModule(BaseModule):
 
-    SIGDIR = Path(__file__).parent / r"sig"
+    SIGDIR = Path(__file__).parent / 'sig'
 
     def __init__(self) -> None:
         super().__init__()
@@ -43,7 +43,9 @@ class SmmBufferValidModule(BaseModule):
         if sibosv:
             return sibosv
 
-        sibosv = SIBOSV_recognizer.recognize_by_diaphora(r"C:\Users\carlsbad\Work\firmware\hp\SmmLockBox.efi.sqlite", 0.75)
+        # We know that SmmLockBox contains multiple calls to SmmIsBufferOutsideSmmValid()
+        smm_lock_box_database = str(Path(__file__).parent / 'SmmLockBox.efi.sqlite')
+        sibosv = SIBOSV_recognizer.recognize_by_diaphora(smm_lock_box_database, 0.75)
         if sibosv:
             return sibosv
 
