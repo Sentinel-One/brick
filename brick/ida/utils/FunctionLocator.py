@@ -1,5 +1,5 @@
 import tempfile
-from . import diff
+from . import pydiaphora
 from bip.base import *
 
 import os
@@ -39,10 +39,10 @@ class FunctionRecognizer:
 
         # Use Diaphora to export the current .idb to a .sqlite database
         export_filename = str(Path(idaapi.get_input_file_path()).with_suffix('.sqlite'))
-        diff.export_this_idb(export_filename)
+        pydiaphora.export_this_idb(export_filename)
 
         # Find matching functions between the two modules.
-        with closing(diff.calculate_diff(export_filename, other)) as diff_results:
+        with closing(pydiaphora.calculate_diff(export_filename, other)) as diff_results:
             cursor = diff_results.cursor()
             query = DIAPHORA_QUERY_FORMAT.format(fname=self.name, ratio=ratio)
             candidate = cursor.execute(query).fetchone()
