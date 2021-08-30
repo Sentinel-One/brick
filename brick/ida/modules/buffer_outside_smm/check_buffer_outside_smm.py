@@ -9,7 +9,7 @@ from bip.base import *
 from bip.hexrays import *
 
 
-from .smi import LegacySwSmiHandler, CommBufferSmiHandler, SmiHandler
+from .smi import SmiHandler
 
 
 class SmmBufferValidModule(BaseModule):
