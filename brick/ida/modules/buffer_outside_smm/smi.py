@@ -1,10 +1,13 @@
+from ida_idaapi import get_inf_structure
 from ...utils.protocol_recognizer import ProtocolRecognizer
 from bip.base import *
 from bip.hexrays import *
 import ida_loader
+import idaapi
 
 from ...utils import brick_utils
 from enum import IntEnum
+from pathlib import Path
 
 class StopCNodeVisit(Exception):
     pass
@@ -147,8 +150,15 @@ class CommBufferSmiHandler(SmiHandler):
     def _has_nested_pointers(self):
         '''Does the CommBuffer contains nested pointers
         '''
+        info = idaapi.get_inf_structure()
+        if info.is_64bit():
+            plugin = 'HexRaysCodeXplorer64'
+        else:
+            plugin = 'HexRaysCodeXplorer'
+
         # Run type reconstruction for the Comm Buffer
-        ida_loader.load_and_run_plugin('HexRaysCodeXplorer64', self.ea)
+        plugin_path = Path(__file__).parent / plugin
+        ida_loader.load_and_run_plugin(str(plugin_path), self.ea)
 
         hex_ea = hex(self.ea)[2:].lower()
         comm_buffer_type = BipType.from_c(f'CommBuffer_{hex_ea} *')
@@ -159,7 +169,7 @@ class CommBufferSmiHandler(SmiHandler):
         self.hxcfunc.invalidate_cache()
         
         # Check if the Comm Buffer has any nested pointers
-        return any(isinstance(x, BTypePtr) for x in comm_buffer_type.children[0].children)
+        return any(isinstance(child, BTypePtr) for child in comm_buffer_type.children[0].children)
 
     def validate(self):
         res = SmiHandler.ValidationResult.SUCCESS
