@@ -1,4 +1,5 @@
 import time
+import datetime
 import colorama
 from contextlib import contextmanager
 
@@ -12,7 +13,8 @@ def log_timing(msg):
         yield
         ellapsed = time.time() - start
     finally:
-        print(colorama.Fore.CYAN + f'[#] {msg} took {int(ellapsed)} seconds')
+        delta = datetime.timedelta(seconds=ellapsed)
+        print(colorama.Fore.CYAN + f'[#] {msg} took {delta}')
 
 @contextmanager
 def log_step(msg):
