@@ -8,7 +8,7 @@ import idaapi
 from ...utils import brick_utils
 from enum import IntEnum
 from pathlib import Path
-
+import re
 class StopCNodeVisit(Exception):
     pass
 
@@ -84,13 +84,17 @@ class LegacySwSmiHandler(SmiHandler):
                     if 'CpuSaveState' in cn.cstr:
                         # Reads the SMM save state directly via gSmst->CpuSaveState[CpuIndex].
                         ea = cn.ea
+
+                if isinstance(cn, CNodeExprObj):
+                    if re.match('MEMORY\[\w+\]', cn.cstr):
+                        ea = cn.ea
                 
                 if brick_utils.path_exists(self, ea):
                     raise StopCNodeVisit()
 
             for hxcfunc in HxCFunc.iter_all():
                 try:
-                    hxcfunc.visit_cnode_filterlist(callback, [CNodeExprCall, CNodeExprMemptr])
+                    hxcfunc.visit_cnode_filterlist(callback, [CNodeExprCall, CNodeExprMemptr, CNodeExprObj])
                 except StopCNodeVisit:
                     # An 'interesting' element was found via the Hex-Rays pseudocode.
                     return True
