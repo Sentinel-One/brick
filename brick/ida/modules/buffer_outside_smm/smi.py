@@ -166,24 +166,19 @@ class CommBufferSmiHandler(SmiHandler):
         '''Reconstructs the layout of the Communication Buffer.
         '''
 
+        comm_buffer_type_name = f'CommBuffer_{self.hex_ea} *'
+
         try:
-            comm_buffer_type = BipType.from_c(f'CommBuffer_{self.hex_ea} *')
+            comm_buffer_type = BipType.from_c(comm_buffer_type_name)
         except RuntimeError:
             comm_buffer_type = None
 
         if comm_buffer_type is None:
-            # First time, reconstruct the buffer using HexRaysCodeXplorer.
-            info = idaapi.get_inf_structure()
-            if info.is_64bit():
-                plugin = 'HexRaysCodeXplorer64'
+            if brick_utils.reconstruct_type(self.ea, 'CommBuffer', comm_buffer_type_name):
+                # Type reconstruction was successful, so we should be able to retrieve the actual type object from its name.
+                comm_buffer_type = BipType.from_c(comm_buffer_type_name)
             else:
-                plugin = 'HexRaysCodeXplorer'
-
-            # Run type reconstruction for the Comm Buffer
-            plugin_path = Path(__file__).parent / plugin
-            if ida_loader.load_and_run_plugin(str(plugin_path), self.ea):
-                comm_buffer_type = BipType.from_c(f'CommBuffer_{self.hex_ea} *')
-            else:
+                # Failed to reconstruct the structure, so fall back into an opaque void *
                 comm_buffer_type = BipType.from_c(f'void *')
             
         # Set the type for the Comm Buffer
