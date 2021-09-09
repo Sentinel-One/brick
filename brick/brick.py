@@ -6,6 +6,7 @@ from logger import log_step, log_operation, log_timing
 from ida.modules import BRICK_FULL_RUN_MODULES, BRICK_QUICK_RUN_MODULES, BRICK_MODULES_DESCRIPTIONS
 from harvest.utils import harvest
 from formatter.html import format
+import progressbar
 
 def analyze(rom, outdir, modules, verbose=False):
     with log_step('Building GUIDs database'):
@@ -25,7 +26,7 @@ def analyze(rom, outdir, modules, verbose=False):
 
     bootstrap_script = pathlib.Path(__file__).parent / 'brick_ida.py'
 
-    for mod in modules:
+    for mod in progressbar.progressbar(modules):
         with log_step(BRICK_MODULES_DESCRIPTIONS[mod]):
             hunter.run_script(bootstrap_script, mod)
 
