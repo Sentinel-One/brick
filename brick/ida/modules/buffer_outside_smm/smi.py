@@ -31,6 +31,10 @@ class SmiHandler(BipFunction):
             for smi in subcls.iter_all():
                 yield smi
 
+    @property
+    def hex_ea(self):
+        return hex(self.ea)[2:].lower()
+
     def check_prototype(self):
         # Do some sanity checks on the arguments.
         if not (self.type.nb_args == 4 and \
@@ -154,26 +158,40 @@ class CommBufferSmiHandler(SmiHandler):
     def _has_nested_pointers(self):
         '''Does the CommBuffer contains nested pointers
         '''
-        info = idaapi.get_inf_structure()
-        if info.is_64bit():
-            plugin = 'HexRaysCodeXplorer64'
-        else:
-            plugin = 'HexRaysCodeXplorer'
+        comm_buffer_type = self.reconstruct_comm_buffer()
+        # Check if the Comm Buffer has any nested pointers
+        return any(isinstance(child, BTypePtr) for child in comm_buffer_type.children[0].children)
 
-        # Run type reconstruction for the Comm Buffer
-        plugin_path = Path(__file__).parent / plugin
-        ida_loader.load_and_run_plugin(str(plugin_path), self.ea)
+    def reconstruct_comm_buffer(self):
+        '''Reconstructs the layout of the Communication Buffer.
+        '''
 
-        hex_ea = hex(self.ea)[2:].lower()
-        comm_buffer_type = BipType.from_c(f'CommBuffer_{hex_ea} *')
-        
+        try:
+            comm_buffer_type = BipType.from_c(f'CommBuffer_{self.hex_ea} *')
+        except RuntimeError:
+            comm_buffer_type = None
+
+        if comm_buffer_type is None:
+            # First time, reconstruct the buffer using HexRaysCodeXplorer.
+            info = idaapi.get_inf_structure()
+            if info.is_64bit():
+                plugin = 'HexRaysCodeXplorer64'
+            else:
+                plugin = 'HexRaysCodeXplorer'
+
+            # Run type reconstruction for the Comm Buffer
+            plugin_path = Path(__file__).parent / plugin
+            if ida_loader.load_and_run_plugin(str(plugin_path), self.ea):
+                comm_buffer_type = BipType.from_c(f'CommBuffer_{self.hex_ea} *')
+            else:
+                comm_buffer_type = BipType.from_c(f'void *')
+            
         # Set the type for the Comm Buffer
         comm_buffer_arg = self.hxcfunc.args[2]
         comm_buffer_arg.type = comm_buffer_type
         self.hxcfunc.invalidate_cache()
-        
-        # Check if the Comm Buffer has any nested pointers
-        return any(isinstance(child, BTypePtr) for child in comm_buffer_type.children[0].children)
+
+        return comm_buffer_type
 
     def validate(self):
         res = SmiHandler.ValidationResult.SUCCESS
