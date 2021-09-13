@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 from typing import Iterable
 import uuid
+from guids.guids_db import GuidsDatabase
 
 from ..base_module import BaseModule
 from ...utils import brick_utils
@@ -17,7 +18,7 @@ class EfiXplorerModule(BaseModule):
     # arg = 1 (01): disable_ui
     DISABLE_UI = 1
 
-    EFI_SMM_RUNTIME_SERVICES_TABLE_GUID = uuid.UUID('{395C33FE-287F-413E-A055-8088C0E1D43E}')
+    EFI_SMM_RUNTIME_SERVICES_TABLE_GUID = GuidsDatabase().name2guid['SmmRsTableGuid']
 
     LEGACY_SW_SMI_PREFIX = 'SwSmiHandler'
     COMM_BUFFER_SMI_NAME = 'Handler'
