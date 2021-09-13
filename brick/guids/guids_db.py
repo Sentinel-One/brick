@@ -1,6 +1,7 @@
 import csv
 import functools
 from pathlib import Path
+from uuid import UUID
 
 DEFAULT_GUIDS_FILENAME = Path(__file__).parent / 'guids.csv'
 
@@ -11,7 +12,7 @@ class GuidsDatabase:
         with open(filename, 'r') as csvfile:
             reader = csv.reader(csvfile)
             for guid, name in reader:
-                self.guid2name[guid.lower()] = name
+                self.guid2name[UUID(guid)] = name
 
     @functools.cached_property
     def name2guid(self):
