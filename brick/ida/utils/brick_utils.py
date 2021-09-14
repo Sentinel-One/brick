@@ -107,22 +107,3 @@ except NameError:
     def execfile(fn, globals=None, locals=None):
         return exec(open(fn).read(), globals, locals)
 
-def reconstruct_type(func_ea: int, var_name: str, var_type: str):
-
-    info = idaapi.get_inf_structure()
-    if info.is_64bit():
-        plugin = 'HexRaysCodeXplorer64'
-        ea_t = c_uint64
-    else:
-        plugin = 'HexRaysCodeXplorer'
-        ea_t = c_uint32
-
-    class reconstruct_type_params_t(Structure):
-        _fields_ = [
-            ('func_ea', ea_t),
-            ('var_name', c_char * 100),
-            ('var_type', c_char * 100)
-        ]
-
-    reconstruct_type_params = reconstruct_type_params_t(func_ea, var_name, var_type)
-    return ida_loader.load_and_run_plugin(plugin, addressof(reconstruct_type_params))

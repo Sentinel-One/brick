@@ -1,5 +1,6 @@
 from ida_idaapi import get_inf_structure
 from ...utils.protocol_recognizer import ProtocolRecognizer
+from ...utils.type_reconstructor import TypeReconstructor
 from bip.base import *
 from bip.hexrays import *
 import ida_loader
@@ -166,27 +167,28 @@ class CommBufferSmiHandler(SmiHandler):
         '''Reconstructs the layout of the Communication Buffer.
         '''
 
-        comm_buffer_type_name = f'CommBuffer_{self.hex_ea} *'
+        comm_buffer_struct_name = f'CommBuffer_{self.hex_ea}'
 
         try:
-            comm_buffer_type = BipType.from_c(comm_buffer_type_name)
+            comm_buffer_struct_type = BipType.from_c(f'{comm_buffer_struct_name} *')
         except RuntimeError:
-            comm_buffer_type = None
+            comm_buffer_struct_type = None
 
-        if comm_buffer_type is None:
-            if brick_utils.reconstruct_type(self.ea, 'CommBuffer', comm_buffer_type_name):
+        if comm_buffer_struct_type is None:
+            reconstructor = TypeReconstructor()
+            if reconstructor.reconstruct_type(self.ea, 'CommBuffer', comm_buffer_struct_name):
                 # Type reconstruction was successful, so we should be able to retrieve the actual type object from its name.
-                comm_buffer_type = BipType.from_c(comm_buffer_type_name)
+                comm_buffer_struct_type = BipType.from_c(f'{comm_buffer_struct_name} *')
             else:
                 # Failed to reconstruct the structure, so fall back into an opaque void *
-                comm_buffer_type = BipType.from_c(f'void *')
+                comm_buffer_struct_type = BipType.from_c(f'void *')
             
         # Set the type for the Comm Buffer
         comm_buffer_arg = self.hxcfunc.args[2]
-        comm_buffer_arg.type = comm_buffer_type
+        comm_buffer_arg.type = comm_buffer_struct_type
         self.hxcfunc.invalidate_cache()
 
-        return comm_buffer_type
+        return comm_buffer_struct_type
 
     def validate(self):
         res = SmiHandler.ValidationResult.SUCCESS
