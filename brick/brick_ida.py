@@ -7,6 +7,8 @@ import ida_kernwin
 import pathlib
 import os
 import logging
+import sys
+import traceback
 
 def prompt_interactive_for_module_name():
     while True:
@@ -98,13 +100,23 @@ if __name__ == '__main__':
     except AttributeError:
         pass
 
-    with setup_brick_logger():
+    is_interactive = "DO_EXIT" not in os.environ
+    
+    with setup_brick_logger() as logger:
         for module in modules:
-            mod_cls = BRICK_MODULES_CLASSES[module]
-            mod_obj = mod_cls()
-            mod_obj.execute()
+            try:
+                mod_cls = BRICK_MODULES_CLASSES[module]
+                mod_obj = mod_cls()
+                mod_obj.run()
+            except Exception as e:
+                tb = traceback.format_tb((sys.exc_info()[2]))
+                if is_interactive:
+                    ida_kernwin.warning(e, str(tb))
+                else:
+                    logger.error(e)
+                    logger.error(tb)
 
     # It is counter intuitive, but the IDA batch mode will pop the UI after executing the script by
     # default, so this allows us to cleanly exit IDA and avoid the UI to pop-up upon completion
-    if "DO_EXIT" in os.environ:
+    if not is_interactive:
         idc.qexit(1)
