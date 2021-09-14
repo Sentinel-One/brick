@@ -31,16 +31,12 @@ class Py_EfiXplorer:
 
     @property
     def plugin_path(self):
-        parent_dir = Path(__file__).parent
-
         inf_struct = idaapi.get_inf_structure()
         if inf_struct.is_64bit():
-            _plugin_path = parent_dir / 'efiXplorer64.dll'
+            return 'efiXplorer64'
         else:
-            # 32 bits
-            _plugin_path = parent_dir / 'efiXplorer.dll'
-
-        return _plugin_path
+            # 32-bits
+            return 'efiXplorer'
 
     def run(self, args=0):
         rc = ida_loader.load_and_run_plugin(str(self.plugin_path), args)
