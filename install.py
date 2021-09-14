@@ -33,35 +33,35 @@ def install_ida_plugins():
 
     DEPENDENCIES = {
         # Codatify.
-        # See 
+        # See https://github.com/tacnetsol/ida/tree/master/plugins for more details.
         DependencyDescriptor(
             'codatify',
             deps_dir / 'codatify.py',
             plugins_dir / 'codatify.py'),
         
         # Rizzo.
-        # See
+        # See https://github.com/tacnetsol/ida/tree/master/plugins for more details.
         DependencyDescriptor(
             'rizzo',
             deps_dir / 'rizzo.py',
             plugins_dir / 'rizzo.py'),
         
         # AlleyCat
-        # See
+        # See https://github.com/tacnetsol/ida/tree/master/plugins for more details.
         DependencyDescriptor(
             'alleycat',
             deps_dir / 'alleycat.py',
             plugins_dir / 'alleycat.py'),
         
         # IDA shims
-        # See
+        # See https://github.com/tacnetsol/ida/tree/master/plugins for more details.
         DependencyDescriptor(
             'shims',
             deps_dir / 'ida_shims.py',
             plugins_dir / 'shims' / 'ida_shims.py'),
         
         # HexRaysCodeXplorer
-        # See 
+        # See https://github.com/REhints/HexRaysCodeXplorer for more details.
         DependencyDescriptor(
             'HexRaysCodeXplorer',
             deps_dir / 'HexRaysCodeXplorer' / 'HexRaysCodeXplorer.dll',
@@ -73,7 +73,7 @@ def install_ida_plugins():
             plugins_dir / 'HexRaysCodeXplorer64.dll'),
 
         # efiXplorer
-        # See
+        # See https://github.com/binarly-io/efiXplorer for more details.
         DependencyDescriptor(
             'efiXplorer',
             deps_dir / 'efiXplorer' / 'efiXplorer.dll',
