@@ -90,18 +90,18 @@ def install_ida_plugins():
 
 def install_bip():
     try:
-        bip_url = 'https://github.com/synacktiv/bip/archive/refs/heads/master.zip'
-        download_file(bip_url, 'bip-master.zip')
+        bip_url = 'https://github.com/synacktiv/bip/archive/refs/heads/develop.zip'
+        download_file(bip_url, 'bip-develop.zip')
         
         log_operation('Unpacking Bip')
-        shutil.unpack_archive('bip-master.zip')
+        shutil.unpack_archive('bip-develop.zip')
 
         log_operation('Installing Bip')
-        subprocess.check_call('python bip-master/install.py')
+        subprocess.check_call('python bip-develop/install.py')
     finally:
         log_operation('Removing temporary Bip files')
-        os.remove('bip-master.zip')
-        shutil.rmtree('bip-master')
+        os.remove('bip-develop.zip')
+        shutil.rmtree('bip-develop')
 
 def main():
     with log_step('Installing Bip'):
