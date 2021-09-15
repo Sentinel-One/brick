@@ -18,6 +18,7 @@ def _export_this_idb(export_filename: str, **diaphora_kwargs: dict):
 
         os.environ.update(diaphora_kwargs)
 
+        # Hook idaapi.qexit to avoid termination of the process.
         with temp_patch(idaapi, 'qexit', lambda code: None):
             with set_directory(DIAPHORA_DIR):
                 new_globals = copy.copy(globals())
@@ -46,7 +47,7 @@ def calculate_diff(first: str, second: str, output_path: str=None) -> sqlite3.Co
     with set_directory(DIAPHORA_DIR):
         args = ['python', 'diaphora.py', first, second, '-o', output_path]
         # print('Executing {}'.format(' '.join(args)))
-        subprocess.check_call(args)
+        subprocess.check_call(args, creationflags=subprocess.CREATE_NO_WINDOW)
     
     return sqlite3.connect(output_path)
     
