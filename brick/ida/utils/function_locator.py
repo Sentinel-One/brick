@@ -31,7 +31,7 @@ class FunctionRecognizer:
 
     def recognize_by_heuristic(self, heur):
         for func in BipFunction.iter_all():
-            if heur(func):
+            if func.can_decompile and heur(func):
                 return self._recognize(func)
 
     def recognize_by_diaphora(self, other: str, ratio:float=1.0):
