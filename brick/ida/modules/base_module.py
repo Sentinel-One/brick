@@ -1,8 +1,7 @@
+from contextlib import contextmanager
 import logging
-import traceback
-from abc import ABC, abstractmethod
-import sys
-import ida_kernwin
+from abc import ABC, abstractmethod, abstractproperty
+import idaapi
 
 class BaseModule(ABC):
 
@@ -11,7 +10,20 @@ class BaseModule(ABC):
         self.res = True
         self.is_interactive = is_interactive
 
+    @staticmethod
+    def take_snapshot(desc):
+        snapshot = idaapi.snapshot_t()
+        snapshot.desc = desc
+        idaapi.take_database_snapshot(snapshot)
+
+    def before(self):
+        # Take a snapshot before introducing any changes to the database.
+        self.take_snapshot(f'Before {self.__class__.__name__}')
+
     @abstractmethod
     def run(self):
         # Should be overriden by subclasses.
         pass
+
+    def after(self):
+        self.take_snapshot(f'After {self.__class__.__name__}')

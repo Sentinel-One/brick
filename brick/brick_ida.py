@@ -107,7 +107,9 @@ if __name__ == '__main__':
             try:
                 mod_cls = BRICK_MODULES_CLASSES[module]
                 mod_obj = mod_cls()
+                mod_obj.before()
                 mod_obj.run()
+                mod_obj.after()
             except Exception as e:
                 tb = traceback.format_tb((sys.exc_info()[2]))
                 if is_interactive:
