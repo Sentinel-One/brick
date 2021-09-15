@@ -37,7 +37,7 @@ class EfiXplorerModule(BaseModule):
 the following call-outs are likely to be false positives''')
 
         for callout in callouts:
-            for handler in self.smi_handlers():
+            for handler in self.smi_handlers:
                 paths = brick_utils.get_paths(handler, callout)
                 for path in paths:
                     self.logger.verbose(self.format_path(path))
