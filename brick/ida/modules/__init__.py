@@ -42,7 +42,7 @@ except ImportError:
 
 if in_ida:
     from .preprocessor.preprocessor import PreprocessorModule
-    from .efiXplorer.apply_efiXplorer import EfiXplorerModule
+    from .efiXplorer.efiXplorer_module import EfiXplorerModule
     from .postprocessor.postprocessor import PostprocessorModule
     from .cseg.scan_cseg import CsegOnlyModule
     from .legacy_protocols.legacy_protocols import LegacyProtocolsModule

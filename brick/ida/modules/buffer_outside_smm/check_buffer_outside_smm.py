@@ -1,6 +1,6 @@
 from ...utils.protocol_recognizer import ProtocolRecognizer
-from ...utils.function_locator import FunctionRecognizer
-from ..efiXplorer.apply_efiXplorer import EfiXplorerModule
+from ...utils.function_matcher import FunctionMatcher
+from ..efiXplorer.efiXplorer_module import EfiXplorerModule
 from ..postprocessor.uefi.smm.smst import SmiHandlerRegisterCall
 from ..base_module import BaseModule
 from pathlib import Path
@@ -37,19 +37,19 @@ class SmmBufferValidModule(BaseModule):
 
             return False
 
-        SIBOSV_recognizer = FunctionRecognizer('SmmIsBufferOutsideSmmValid', is_library=True)
+        SIBOSV_recognizer = FunctionMatcher('SmmIsBufferOutsideSmmValid', is_library=True)
 
-        sibosv = SIBOSV_recognizer.recognize_by_heuristic(_SIBOSV_heuristic)
+        sibosv = SIBOSV_recognizer.match_by_heuristic(_SIBOSV_heuristic)
         if sibosv:
             return sibosv
 
         # We know that SmmLockBox contains multiple calls to SmmIsBufferOutsideSmmValid()
         smm_lock_box_database = str(Path(__file__).parent / 'SmmLockBox.efi.sqlite')
-        sibosv = SIBOSV_recognizer.recognize_by_diaphora(smm_lock_box_database, 0.75)
+        sibosv = SIBOSV_recognizer.match_by_diaphora(smm_lock_box_database, 0.75)
         if sibosv:
             return sibosv
 
-        sibosv = SIBOSV_recognizer.recognize_by_rizzo(self.SIGDIR)
+        sibosv = SIBOSV_recognizer.match_by_rizzo(self.SIGDIR)
         if sibosv:
             return sibosv
 
