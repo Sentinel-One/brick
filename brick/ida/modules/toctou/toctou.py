@@ -1,4 +1,4 @@
-from ...utils.protocol_recognizer import ProtocolRecognizer
+from ...utils.protocol_matcher import ProtocolMatcher
 from ...utils.function_matcher import FunctionMatcher
 from ..efiXplorer.efiXplorer_module import EfiXplorerModule
 from ..postprocessor.uefi.smm.smst import SmiHandlerRegisterCall
