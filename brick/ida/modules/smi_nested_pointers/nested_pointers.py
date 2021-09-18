@@ -1,15 +1,16 @@
-from ...utils.protocol_recognizer import ProtocolRecognizer
+from ...utils.protocol_matcher import ProtocolMatcher
 from ...utils.function_matcher import FunctionMatcher
 from ..efiXplorer.efiXplorer_module import EfiXplorerModule
 from ..postprocessor.uefi.smm.smst import SmiHandlerRegisterCall
 from ..base_module import BaseModule
 from pathlib import Path
+from ...utils import brick_utils
 
 from bip.base import *
 from bip.hexrays import *
 
 
-from .smi import SmiHandler
+from .smi import CommBufferSmiHandler, SmiHandler
 
 
 class SmmBufferValidModule(BaseModule):
@@ -19,7 +20,7 @@ class SmmBufferValidModule(BaseModule):
     def __init__(self) -> None:
         super().__init__()
 
-    def recognize_SIBOSV(self):
+    def match_SmmIsBufferOutsideSmmValid(self):
 
         def _SIBOSV_heuristic(f):
 
@@ -49,49 +50,43 @@ class SmmBufferValidModule(BaseModule):
         if sibosv:
             return sibosv
 
-        sibosv = SIBOSV_recognizer.match_by_rizzo(self.SIGDIR)
-        if sibosv:
-            return sibosv
-
         return None
 
-
-
-    def recognize_AMI_SMM_BUFFER_VALIDATION_PROTOCOL(self):
+    def match_AMI_SMM_BUFFER_VALIDATION_PROTOCOL(self):
 
         AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID = '{da473d7f-4b31-4d63-92b7-3d905ef84b84}'
 
         # Some SMM modules use the AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID protocol instead of calling
         # SmmIsBufferOutsideSmmValid directly.
-        ASBVP_recognizer = ProtocolRecognizer(AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID, 'AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID', is_smm=True)
-        ASBVP_recognizer.recognize()
+        ASBVP_matcher = ProtocolMatcher(AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID, 'AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID', is_smm=True)
+        ASBVP_matcher.match()
+        return ASBVP_matcher.get()
         # For now just returns the 1st instance.
         # return ASBVP_recognizer.get().Instances[0]
 
-    def run(self):
-        self.recognize_SIBOSV()
-        self.recognize_AMI_SMM_BUFFER_VALIDATION_PROTOCOL()
-        # print(gAmiSmmBufferValidationProtocol)
+    def _has_nested_pointers(comm_buffer_type):
+        '''
+        Does the CommBuffer contains nested pointers?
+        '''
 
-        res = SmiHandler.ValidationResult.NO_SMIS
+        # Check if the Comm Buffer has any nested pointers
+        return any(isinstance(child, BTypePtr) for child in comm_buffer_type.children[0].children)
+
+    def run(self):
+        SmmIsBufferOutsideSmmValid = self.match_SmmIsBufferOutsideSmmValid()
+        (_, instances) = self.match_AMI_SMM_BUFFER_VALIDATION_PROTOCOL()
 
         for handler in SmiHandler.iter_all():
-            res = handler.validate()
-            
-            if res & SmiHandler.ValidationResult.NO_ATTACK_SURFACE:
-                self.logger.info(f'SMI {handler.name} does not expose any attack surface')
+            print(handler)
+            if brick_utils.path_exists(handler, SmmIsBufferOutsideSmmValid) or \
+               any(brick_utils.path_exists(handler, instance) for instance in instances):
+                # Handler uses verification services.
+                continue
 
-            if res & SmiHandler.ValidationResult.CHECK_NESTED_POINTERS:
+            if handler.attack_surface:
                 self.logger.error(f'SMI {handler.name} does not validate the comm buffer, check for unprotected nested pointers')
-
-            if res & SmiHandler.ValidationResult.HAS_NESTED_POINTERS:
-                self.logger.warning(f'SMI {handler.name} has pointers nested in the comm buffer')
-                
-            if res & SmiHandler.ValidationResult.CHECK_POTENTIAL_OVERFLOW:
-                self.logger.error(f'SMI {handler.name} does not check the size of the comm buffer, check for potential overflows')
-
-            if res == SmiHandler.ValidationResult.SUCCESS:
-                self.logger.success(f'SMI {handler.name} seems secure')
-            
-        if res == SmiHandler.ValidationResult.NO_SMIS:
-            self.logger.success(f'No software SMIs found')
+                if isinstance(handler, CommBufferSmiHandler):
+                    comm_buffer_type = handler.reconstruct_comm_buffer()
+                    if self._has_nested_pointers(comm_buffer_type):
+                        self.logger.warning(f'SMI {handler.name} has nested pointers in the communication buffer')
+                    
