@@ -49,7 +49,7 @@ class SetVarInfoLeakModule(BaseModule):
         
         if isinstance(node, CNodeExprObj):
             # if this is a global object, get name of variable from memory.
-            var_name = brick_utils.get_wstring(node.value)
+            var_name = BipData.get_c16string(node.value)
             
         if not var_name:
             # Fallback, just use the C-string.

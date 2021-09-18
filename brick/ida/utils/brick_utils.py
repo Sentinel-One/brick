@@ -12,15 +12,6 @@ import ida_loader
 from ctypes import *
 
 
-def get_wstring(ea):
-    unicode_null = search_bytes(b'\x00' * 2, ea)
-    if not unicode_null:
-        return ''
-
-    size = unicode_null.ea - ea
-    wstr = BipData.get_bytes(ea, size).replace(b'\x00', b'')
-    return wstr
-
 def get_paths(x, y, bidirectional=True):
     # Returns True iff there is a path between the two nodes.
     if (x is None) or (y is None):
