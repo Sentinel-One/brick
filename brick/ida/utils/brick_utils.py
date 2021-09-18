@@ -103,7 +103,7 @@ def temp_env():
 
 try:
     from builtins import execfile
-except NameError:
+except (NameError, ImportError):
     def execfile(fn, globals=None, locals=None):
         return exec(open(fn).read(), globals, locals)
 
