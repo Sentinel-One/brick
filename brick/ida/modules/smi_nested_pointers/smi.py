@@ -1,5 +1,5 @@
 from functools import cached_property
-from ...utils.type_reconstructor import TypeReconstructor
+from ...utils.type_reconstructor import TypeReconstructor, HexRaysCodeXplorerError
 from bip.base import *
 from bip.hexrays import *
 
@@ -114,10 +114,11 @@ class CommBufferSmiHandler(SmiHandler):
 
         if comm_buffer_struct_type is None:
             reconstructor = TypeReconstructor()
-            if reconstructor.reconstruct_type(self.ea, 'CommBuffer', comm_buffer_struct_name):
+            try:
+                reconstructor.reconstruct_type(self.ea, 'CommBuffer', comm_buffer_struct_name):
                 # Type reconstruction was successful, so we should be able to retrieve the actual type object from its name.
                 comm_buffer_struct_type = BipType.from_c(f'{comm_buffer_struct_name} *')
-            else:
+            except HexRaysCodeXplorerError:
                 # Failed to reconstruct the structure, so fall back into an opaque void *
                 comm_buffer_struct_type = BipType.from_c(f'void *')
             
