@@ -115,7 +115,7 @@ class CommBufferSmiHandler(SmiHandler):
         if comm_buffer_struct_type is None:
             reconstructor = TypeReconstructor()
             try:
-                reconstructor.reconstruct_type(self.ea, 'CommBuffer', comm_buffer_struct_name):
+                reconstructor.reconstruct_type(self.ea, 'CommBuffer', comm_buffer_struct_name)
                 # Type reconstruction was successful, so we should be able to retrieve the actual type object from its name.
                 comm_buffer_struct_type = BipType.from_c(f'{comm_buffer_struct_name} *')
             except HexRaysCodeXplorerError:
