@@ -6,7 +6,7 @@ import uuid
 
 from collections import namedtuple
 
-class ProtocolRecognizer:
+class ProtocolMatcher:
 
     Result = namedtuple('ProtocolRecognizerResult', ['Guid', 'Instances'])
 
@@ -19,7 +19,7 @@ class ProtocolRecognizer:
         self.name = name
         self.is_smm = is_smm
 
-    def recognize(self):
+    def match(self):
 
         def rename_protocol_instances(cn: CNodeExprCall):
             if self.is_smm:
@@ -52,4 +52,4 @@ class ProtocolRecognizer:
                     self.logger.debug(e)
 
     def get(self):
-        return ProtocolRecognizer.Result(GetEltByName(self.name), BipElt.get_by_prefix(f'g_{self.name}'))
+        return ProtocolMatcher.Result(GetEltByName(self.name), BipElt.get_by_prefix(f'g_{self.name}'))
