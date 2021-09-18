@@ -11,19 +11,6 @@ import idaapi
 import ida_loader
 from ctypes import *
 
-def search_bytes(byt, min_ea=None, max_ea=None):
-    if min_ea is None: min_ea = BipIdb.min_ea()
-    if max_ea is None: max_ea = BipIdb.max_ea()
-    
-    byt = " ".join([hex(_) for _ in byt])
-    return BipElt.search_bytes(byt, start_ea=min_ea, end_ea=max_ea, nxt=False)
-
-def search_guid(guid, min_ea=None, max_ea=None):
-    if not isinstance(guid, uuid.UUID):
-        # Try converting to a UUID object first.
-        guid = uuid.UUID(guid)
-
-    return search_bytes(guid.bytes_le, min_ea, max_ea)
 
 def get_wstring(ea):
     unicode_null = search_bytes(b'\x00' * 2, ea)
