@@ -13,9 +13,7 @@ from bip.hexrays import *
 from .smi import CommBufferSmiHandler, SmiHandler
 
 
-class SmmBufferValidModule(BaseModule):
-
-    SIGDIR = Path(__file__).parent / 'sig'
+class CheckNestedPointersModule(BaseModule):
 
     def __init__(self) -> None:
         super().__init__()
@@ -40,7 +38,7 @@ class SmmBufferValidModule(BaseModule):
 
         SIBOSV_recognizer = FunctionMatcher('SmmIsBufferOutsideSmmValid', is_library=True)
 
-        sibosv = SIBOSV_recognizer.match_by_heuristic(_SIBOSV_heuristic)
+        sibosv = SIBOSV_recognizer.match_by_heuristic(_SIBOSV_heuristic, decompiler_required=True)
         if sibosv:
             return sibosv
 
@@ -64,6 +62,7 @@ class SmmBufferValidModule(BaseModule):
         # For now just returns the 1st instance.
         # return ASBVP_recognizer.get().Instances[0]
 
+    @staticmethod
     def _has_nested_pointers(comm_buffer_type):
         '''
         Does the CommBuffer contains nested pointers?
@@ -77,16 +76,19 @@ class SmmBufferValidModule(BaseModule):
         (_, instances) = self.match_AMI_SMM_BUFFER_VALIDATION_PROTOCOL()
 
         for handler in SmiHandler.iter_all():
-            print(handler)
+            if not handler.attack_surface:
+                self.logger.verbose(f'SMI {handler.name} does not expose any attack surface')
+                continue
+
             if brick_utils.path_exists(handler, SmmIsBufferOutsideSmmValid) or \
                any(brick_utils.path_exists(handler, instance) for instance in instances):
                 # Handler uses verification services.
+                self.logger.verbose(f'SMI {handler.name} seems secure')
                 continue
 
-            if handler.attack_surface:
-                self.logger.error(f'SMI {handler.name} does not validate the comm buffer, check for unprotected nested pointers')
-                if isinstance(handler, CommBufferSmiHandler):
-                    comm_buffer_type = handler.reconstruct_comm_buffer()
-                    if self._has_nested_pointers(comm_buffer_type):
-                        self.logger.warning(f'SMI {handler.name} has nested pointers in the communication buffer')
+            self.logger.error(f'SMI {handler.name} does not validate the comm buffer, check for unprotected nested pointers')
+            if isinstance(handler, CommBufferSmiHandler):
+                comm_buffer_type = handler.reconstruct_comm_buffer()
+                if self._has_nested_pointers(comm_buffer_type):
+                    self.logger.warning(f'SMI {handler.name} has nested pointers in the communication buffer')
                     
