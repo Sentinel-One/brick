@@ -7,7 +7,7 @@ from logger import log_warning
 def format(outdir, outfile, clean=False):
     results = []
 
-    for module in (Path(module).resolve() for module in glob.glob(f'{outdir}\\*.efi')):
+    for module in (Path(module).resolve() for module in glob.glob(os.path.join(outdir, '*.efi'))):
         try:
             report = module.with_suffix('.brick')
             data = open(report, 'r').read()
