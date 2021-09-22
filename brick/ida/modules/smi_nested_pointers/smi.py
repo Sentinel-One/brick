@@ -36,7 +36,7 @@ class SmiHandler(BipFunction):
     @cached_property
     def attack_surface(self):
 
-        def is_attack_surface(node):
+        def is_attack_surface(node: CNode):
             '''
             Does the node represents a potential attack surface for the current SMI.
             '''
@@ -54,9 +54,14 @@ class SmiHandler(BipFunction):
                     candidate = node
 
             if isinstance(node, CNodeExprObj):
+                # Is this an access to an hardcoded address?
                 if re.match(self.memory_access_re, node.cstr):
-                    # Reads from a hardcoded address.
-                    candidate = node
+                    # Filter out write operations.
+                    if node.has_parent and isinstance(node.parent, CNodeExprAssignment) and node == node.parent.dst:
+                        # The MEMORY node is the destination and does not contribute to the overall attack surface.
+                        pass
+                    else:
+                        candidate = node
 
             # Last but not least, make sure that the candidate node is reachable from the SMI.
             if candidate:
