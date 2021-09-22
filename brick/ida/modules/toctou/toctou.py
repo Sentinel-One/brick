@@ -24,13 +24,16 @@ class ToctouModule(BaseModule):
             comm_buffer_struct_type = comm_buffer_type.children[0]
             nested_pointers = {mem_name:0 for mem_name, mem_type in comm_buffer_struct_type.members_info.items() if isinstance(mem_type, BTypePtr)}
 
-            def callback(cnode):
-                match = re.match('CommBuffer->(field_.+)', cnode.cstr)
+            def callback(node: CNode):
+                match = re.match('CommBuffer->(field_.+)', node.cstr)
                 if not match:
                     return
 
                 field_name = match.groups()[0]
                 if not field_name in nested_pointers:
+                    return
+
+                if node.has_parent and isinstance(node.parent, CNodeExprAssignment) and node.parent.dst == node:
                     return
 
                 nested_pointers[field_name] += 1
