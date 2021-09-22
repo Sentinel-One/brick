@@ -9,6 +9,8 @@ from .uefi.smm.cpu import SmmCpuCallsFactory
 from .uefi.smm.access2 import SmmAccess2Protocol
 from .uefi.smm.smst import SmstFactory
 
+from ...utils import bip_utils
+
 class PostprocessorModule(BaseModule):
 
     EFI_SMM_HANDLER_ENTRY_POINT = BipType.from_c("""EFI_STATUS (f)(
@@ -38,6 +40,29 @@ class PostprocessorModule(BaseModule):
                 if op.type == BipOpType.IMM and op.value & 0x8000000000000000:
                     idc.op_enum(ins.ea, op_id, me._eid, 0)
 
+    def _handle_assignments(self):
+
+        def callback(node: CNode):
+            assert isinstance(node, CNodeExprAsg)
+
+            src = node.src.ignore_cast
+            dst = node.dst.ignore_cast
+
+            # Check that both objects are globals
+            if isinstance(src, CNodeExprObj) and isinstance(dst, CNodeExprObj):
+                # The destination operand is merely an integer.
+                if isinstance(dst.type, BTypeInt):
+                    # The source is an EFI table.
+                    if isinstance(src.type, BTypePtr) and src.type.pointed.name == '_EFI_SMM_SYSTEM_TABLE2':
+                        # Copy type.
+                        src.type.set_at(dst.value)
+                        node.hxcfunc.invalidate_cache()
+                        return True
+
+        modified = bip_utils.collect_cnode_filterlist(None, callback, [CNodeExprAsg])
+        while modified:
+            bip_utils.collect_cnode_filterlist(None, callback, [CNodeExprAsg])
+
     def run(self):
         # Apply correct signature to all SW SMI handlers.
         self._fix_sw_smis_signatures()
@@ -45,3 +70,5 @@ class PostprocessorModule(BaseModule):
         self._fix_efi_services_signatures()
         # Rename EFI status codes.
         self._rename_enums()
+        # Handle assigment of global variables.
+        self._handle_assignments()
