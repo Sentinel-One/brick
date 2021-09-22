@@ -10,6 +10,3 @@
 [submodule "brick/externals/edk2-platforms"]
 	path = brick/externals/edk2-platforms
 	url = https://github.com/tianocore/edk2-platforms.git
-[submodule ".\\brick\\externals\\edk2-platforms"]
-	path = .\\brick\\externals\\edk2-platforms
-	url = https://github.com/tianocore/edk2-platforms.git
