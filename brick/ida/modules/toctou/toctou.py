@@ -11,6 +11,7 @@ class ToctouModule(BaseModule):
 
     def __init__(self) -> None:
         super().__init__()
+        self.field_re = re.compile('CommBuffer->(field_.+)')
 
     def run(self):
         
@@ -25,7 +26,7 @@ class ToctouModule(BaseModule):
             nested_pointers = {mem_name:0 for mem_name, mem_type in comm_buffer_struct_type.members_info.items() if isinstance(mem_type, BTypePtr)}
 
             def callback(node: CNode):
-                match = re.match('CommBuffer->(field_.+)', node.cstr)
+                match = re.match(self.field_re, node.cstr)
                 if not match:
                     return
 
