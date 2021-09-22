@@ -5,7 +5,7 @@ from .efiXplorer_plugin import EfiXplorerPlugin
 from pathlib import Path
 
 from ..base_module import BaseModule
-from ...utils import brick_utils
+from ...utils import brick_utils, bip_utils
 from ...utils.function_matcher import FunctionMatcher
 
 from bip.base import *
@@ -51,7 +51,7 @@ class EfiXplorerModule(BaseModule):
     def handle_smm_callouts(self, callouts):
         self.match_known_false_positives()
 
-        if brick_utils.search_guid(self.EFI_SMM_RUNTIME_SERVICES_TABLE_GUID):
+        if bip_utils.search_guid(self.EFI_SMM_RUNTIME_SERVICES_TABLE_GUID):
             self.logger.info('''Module references EFI_SMM_RUNTIME_SERVICES_TABLE_GUID,
 the following call-outs are likely to be false positives''')
 

@@ -1,7 +1,7 @@
 from bip.base import *
 from bip.hexrays import *
 
-from . import brick_utils
+from . import brick_utils, bip_utils
 import uuid
 
 from collections import namedtuple
@@ -39,7 +39,7 @@ class ProtocolMatcher:
                     ea = interface.value # get the address of the object
                     BipElt(ea).name = f'g_{self.name}_{ea}'
 
-        found = brick_utils.search_guid(self.guid)
+        found = bip_utils.search_guid(self.guid)
         if found:
             elt = BipElt(found.ea)
             elt.name = self.name
