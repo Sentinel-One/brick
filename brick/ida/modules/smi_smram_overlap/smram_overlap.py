@@ -30,7 +30,7 @@ class SmramOverlapModule(BaseModule):
             deref = node.ops[0].ignore_cast
             return isinstance(deref, CNodeExprVar) and (deref.lvar_name == 'CommBufferSize')
 
-        return bip_utils.search_cnode_filterlist(handler.hxcfunc, deref_comm_buffer_size, [CNodeExprPtr])
+        return bip_utils.collect_cnode_filterlist(handler.hxcfunc, deref_comm_buffer_size, [CNodeExprPtr])
 
     def run(self):
         for handler in CommBufferSmiHandler.iter_all():
