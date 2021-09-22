@@ -14,20 +14,29 @@ from ctypes import *
 
 def get_paths(x, y, bidirectional=True):
     # Returns True iff there is a path between the two nodes.
-    if (x is None) or (y is None):
+    if x is None or y is None:
         return []
 
+    print('x is', x, 'y is', y)
+
     if hasattr(x, 'ea'):
-        x = x.ea
+        ea1 = x.ea
+
+    if ea1 == idaapi.BADADDR and hasattr(x, 'closest_ea'):
+        ea1 = x.closest_ea
 
     if hasattr(y, 'ea'):
-        y = y.ea
+        ea2 = y.ea
 
-    paths = AlleyCat(x, y).paths
+    if ea2 == idaapi.BADADDR and hasattr(y, 'closest_ea'):
+        ea2 = y.closest_ea
+
+    print('x is', x, 'y is', y)
+    paths = AlleyCat(ea1, ea2).paths
     
     # Paths are symmetric.
     if bidirectional:
-        paths += AlleyCat(y, x).paths
+        paths += AlleyCat(ea2, ea1).paths
 
     return paths
 
