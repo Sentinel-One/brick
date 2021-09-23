@@ -11,27 +11,24 @@ import idaapi
 import ida_loader
 from ctypes import *
 
+def get_ea(obj):
+    if isinstance(obj, int):
+        return obj
+
+    if hasattr(obj, 'ea') and obj.ea != idaapi.BADADDR:
+        return obj.ea
+
+    if hasattr(obj, 'closest_ea') and obj.closest_ea != idaapi.BADADDR:
+        return obj.closest_ea
+
+    return int(obj)
 
 def get_paths(x, y, bidirectional=True):
     # Returns True iff there is a path between the two nodes.
     if x is None or y is None:
         return []
 
-    print('x is', x, 'y is', y)
-
-    if hasattr(x, 'ea'):
-        ea1 = x.ea
-
-    if ea1 == idaapi.BADADDR and hasattr(x, 'closest_ea'):
-        ea1 = x.closest_ea
-
-    if hasattr(y, 'ea'):
-        ea2 = y.ea
-
-    if ea2 == idaapi.BADADDR and hasattr(y, 'closest_ea'):
-        ea2 = y.closest_ea
-
-    print('x is', x, 'y is', y)
+    ea1, ea2 = get_ea(x), get_ea(y)
     paths = AlleyCat(ea1, ea2).paths
     
     # Paths are symmetric.
