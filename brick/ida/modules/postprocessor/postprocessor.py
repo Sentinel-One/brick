@@ -52,8 +52,8 @@ class PostprocessorModule(BaseModule):
             if isinstance(src, CNodeExprObj) and isinstance(dst, CNodeExprObj):
                 # The destination operand is merely an integer.
                 if isinstance(dst.type, BTypeInt):
-                    # The source is an EFI table.
-                    if isinstance(src.type, BTypePtr) and src.type.pointed.name == '_EFI_SMM_SYSTEM_TABLE2':
+                    # The source is a pointer to a structure.
+                    if isinstance(src.type, BTypePtr) and isinstance(src.type.pointed, BTypeStruct):
                         # Copy type.
                         src.type.set_at(dst.value)
                         node.hxcfunc.invalidate_cache()
