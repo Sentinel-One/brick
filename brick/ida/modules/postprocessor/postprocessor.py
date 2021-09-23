@@ -61,7 +61,7 @@ class PostprocessorModule(BaseModule):
 
         modified = bip_utils.collect_cnode_filterlist(None, callback, [CNodeExprAsg])
         while modified:
-            bip_utils.collect_cnode_filterlist(None, callback, [CNodeExprAsg])
+            modified = bip_utils.collect_cnode_filterlist(None, callback, [CNodeExprAsg])
 
     def run(self):
         # Apply correct signature to all SW SMI handlers.
