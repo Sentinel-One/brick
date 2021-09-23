@@ -41,7 +41,7 @@ class ToctouModule(BaseModule):
 
             handler.hxcfunc.visit_cnode_filterlist(callback, [CNodeExprMemptr])
 
-            for mem_name, occurences in nested_pointers.items():
+            for member_name, occurences in nested_pointers.items():
                 if occurences > 1:
-                    self.logger.error(f'Comm buffer member {mem_name} is fetched {occurences} times and might be subject to a TOCTOU attack')
+                    self.logger.error(f'SMI {handler.name}: Comm buffer member {member_name} is fetched {occurences} times and might be subject to a TOCTOU attack')
             # self.logger.info(nested_pointers)
