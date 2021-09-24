@@ -13,6 +13,15 @@ class LegacyProtocolsModule(BaseModule):
     def __init__(self) -> None:
         super().__init__()
 
+    def trace_unknown_protocol_guids(self):
+        for prop in BipElt.get_by_prefix('ProprietaryProtocol'):
+            data = BipData.get_bytes(prop.ea, prop.size)
+            try:
+                guid = UUID(bytes_le=data)
+            except ValueError:
+                continue
+            self.logger.debug(f'Found unknown protocol GUID {guid}')
+
     def run(self):
         guids_db = GuidsDatabase()
         
@@ -26,6 +35,4 @@ class LegacyProtocolsModule(BaseModule):
         if self.res:
             self.logger.success('No legacy protocols were found')
 
-        for prop in BipElt.get_by_prefix('ProprietaryProtocol'):
-            data = BipData.get_bytes(prop.ea, prop.size)
-            self.logger.debug(f'Found proprietary protocol GUID {UUID(bytes_le=data)}')
+        self.trace_unknown_protocol_guids()
