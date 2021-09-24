@@ -50,3 +50,8 @@ class CsegOnlyModule(BaseModule):
                 if brick_utils.get_paths(func, smi):
                     # Report that a potentially vulnerable function was found.
                     self.logger.warning(f'Function 0x{func.ea:x} contains references to CSEG-only addresses')
+                    self.res = False
+        
+        if self.res:
+            self.logger.success('No SMIs that have CSEG specific behavior were found')
+            
