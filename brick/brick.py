@@ -1,5 +1,7 @@
 import pathlib
 import argparse
+
+from progressbar.bar import ProgressBar
 from guids.guids_db import GuidsDatabase
 from hunter import Hunter
 from logger import log_step, log_operation, log_timing
@@ -7,8 +9,22 @@ from ida.modules import BRICK_FULL_RUN_MODULES, BRICK_QUICK_RUN_MODULES, BRICK_M
 from harvest.utils import harvest
 from formatter.html import format
 import progressbar
+import threading
+from multiprocessing.connection import Listener
+from .shared import NOTIFICATION_ADDRESS
 
-def analyze(rom, outdir, modules, verbose=False):
+def update_progress_bar(max_value: int):
+    
+    listener = Listener(NOTIFICATION_ADDRESS)
+    bar = progressbar.ProgressBar(max_value=max_value)
+
+    while True:
+        # When the analysis is complete, the client is expected to connect to the server.
+        # We use it as an indication we should update the progress bar.
+        listener.accept()
+        bar.update(bar.value + 1)
+
+def analyze(rom, outdir, modules, verbose=False, quick=False):
     with log_step('Building GUIDs database'):
         db = GuidsDatabase()
     
@@ -26,9 +42,12 @@ def analyze(rom, outdir, modules, verbose=False):
 
     bootstrap_script = pathlib.Path(__file__).parent / 'brick_ida.py'
 
-    for mod in progressbar.progressbar(modules):
-        with log_step(BRICK_MODULES_DESCRIPTIONS[mod]):
-            hunter.run_script(bootstrap_script, mod)
+    import glob
+    max_value = len(glob.glob(f"{outdir}\\*.efi"))
+    # Start a background thread to update the progess bar when 
+    threading.Thread(target=update_progress_bar, args=(max_value, ), daemon=True).start()
+
+    hunter.run_script(bootstrap_script)
 
     # Merge all individual output files into one report file, formatted as HTML.
     html_report = f'{rom}.html'

@@ -9,6 +9,8 @@ import os
 import logging
 import sys
 import traceback
+from multiprocessing.connection import Client
+from .shared import NOTIFICATION_ADDRESS
 
 def prompt_interactive_for_module_name():
     while True:
@@ -82,6 +84,15 @@ def setup_brick_logger():
     finally:
         brick_logger.handlers.clear()
     
+def take_snapshot(desc):
+    snapshot = idaapi.snapshot_t()
+    snapshot.desc = desc
+    idaapi.take_database_snapshot(snapshot)
+
+def signal_module_completion():
+    # Make a connection to signal the analysis is complete.
+    conn = Client(NOTIFICATION_ADDRESS)
+    conn.close()
 
 if __name__ == '__main__':
     if len(idc.ARGV) < 2:
@@ -117,6 +128,9 @@ if __name__ == '__main__':
                 else:
                     logger.error(e)
                     logger.error(tb)
+
+        if not is_interactive:
+            signal_module_completion()
 
     # It is counter intuitive, but the IDA batch mode will pop the UI after executing the script by
     # default, so this allows us to cleanly exit IDA and avoid the UI to pop-up upon completion
