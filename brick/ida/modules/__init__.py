@@ -3,6 +3,7 @@ BRICK_FULL_RUN_MODULES = (
     'efiXplorer',
     'postprocessor',
     'smm_buffer',
+    'smram_overlap',
     'toctou',
     'legacy_protocols',
     'is_edk2',
@@ -47,7 +48,8 @@ if in_ida:
     from .cseg.scan_cseg import CsegOnlyModule
     from .legacy_protocols.legacy_protocols import LegacyProtocolsModule
     from .reference_code.is_edk2 import IsEdk2Module
-    from .buffer_outside_smm.check_buffer_outside_smm import SmmBufferValidModule
+    from .smi_nested_pointers.check_nested_pointers import CheckNestedPointersModule
+    from .smi_smram_overlap.smram_overlap import SmramOverlapModule
     from .toctou.toctou import ToctouModule
     from .setvar_infoleak.setvar_infoleak import SetVarInfoLeakModule
 
@@ -55,7 +57,8 @@ if in_ida:
         'preprocessor': PreprocessorModule,
         'efiXplorer': EfiXplorerModule,
         'postprocessor': PostprocessorModule,
-        'smm_buffer': SmmBufferValidModule,
+        'smm_buffer': CheckNestedPointersModule,
+        'smram_overlap': SmramOverlapModule,
         'toctou': ToctouModule,
         'legacy_protocols': LegacyProtocolsModule,
         'is_edk2': IsEdk2Module,
