@@ -64,11 +64,11 @@ class PostprocessorModule(BaseModule):
             modified = bip_utils.collect_cnode_filterlist(None, callback, [CNodeExprAsg])
 
     def run(self):
+        # Handle assigment of global variables.
+        self._handle_assignments()
         # Apply correct signature to all SW SMI handlers.
         self._fix_sw_smis_signatures()
         # Fix signatures for common EFI/SMM services that efiXplorer missed.
         self._fix_efi_services_signatures()
         # Rename EFI status codes.
         self._rename_enums()
-        # Handle assigment of global variables.
-        self._handle_assignments()
