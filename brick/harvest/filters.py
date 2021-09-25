@@ -12,4 +12,4 @@ edk2_guids = [g.guid.lower() for g in GuidList.guidlist_from_filesystem(EDK2_DIR
                                       GuidList.guidlist_from_filesystem(EDK2_PLATFORMS)]
 
 def skip_edk2_filter(name, fd):
-    return name.lower() in edk2_names or name.lower() is edk2_guids
+    return name.lower() not in edk2_names and name.lower() not in edk2_guids

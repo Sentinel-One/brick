@@ -1,10 +1,14 @@
 from abc import ABC, abstractmethod
-
+from signal import valid_signals
+import shutil
+from pathlib import Path
+from logger import log_operation
 class AbstractHarvester(ABC):
 
     def __init__(self):
         self._guids_dict = {}
         self._ext = None
+        self.filter = lambda *args: True
 
     @property
     def guids_dict(self):

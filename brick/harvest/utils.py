@@ -6,7 +6,7 @@ from .UefiToolHarvester import UefiToolHarvester
 from .SingleFileHarvester import SingleFileHarvester
 from .DirectoryHarvester import DirectoryHarvester
 
-def harvest(rom, outdir, guids_dict=None):
+def do_harvest(rom, outdir, guids_dict=None, filter=None):
     log_operation(f'Creating directory {outdir}')
 
     if os.path.exists(outdir):
@@ -21,6 +21,8 @@ def harvest(rom, outdir, guids_dict=None):
             harvester = cls()
             harvester.ext = 'efi'
             harvester.guids_dict = guids_dict
+            if filter is not None:
+                harvester.filter = filter
             harvester.harvest(rom, outdir)
         except Exception as e:
             # Harvest was unsuccessful, fall back into other harvesters in case there are any.
