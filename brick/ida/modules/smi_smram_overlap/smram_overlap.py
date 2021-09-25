@@ -30,4 +30,8 @@ class SmramOverlapModule(BaseModule):
     def run(self):
         for handler in CommBufferSmiHandler.iter_all():
             if not self._checks_comm_buff_size(handler):
+                self.res = False
                 self.logger.error(f'SMI {handler.name} does not check the size of the comm buffer, check for potential overlap with SMRAM')
+
+        if self.res:
+            self.logger.success('No SMI that omits checking CommBufferSize was found')
