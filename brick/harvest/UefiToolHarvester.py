@@ -1,3 +1,4 @@
+from io import BytesIO, FileIO
 import os
 import subprocess
 from .AbstractHarvester import AbstractHarvester
@@ -91,14 +92,12 @@ class UefiToolHarvester(AbstractHarvester):
             smm_executables.append((friendly_name, smm_info_file.pe32))
         return smm_executables
 
-    def harvest(self, rom, outdir):
+    def iter(self, rom):
         dirname = self._unpack(rom)
         smm_executables = self._get_smm_executables(dirname)
 
         for name, pe32 in smm_executables:
-            friendly_name = (Path(outdir) / name).with_suffix('.efi')
-            log_operation(f'Dumping {friendly_name} to disk')
-            shutil.copy(pe32, friendly_name)
+            yield (name, FileIO(pe32, 'rb'))
 
         # No longer needed, so we can delete it.
-        shutil.rmtree(dirname)
+        # shutil.rmtree(dirname)

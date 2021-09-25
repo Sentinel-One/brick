@@ -30,5 +30,19 @@ class AbstractHarvester(ABC):
             return guid
 
     @abstractmethod
-    def harvest(self, rom, outdir):
+    def iter(self, rom):
         pass
+
+    def harvest(self, rom, outdir):
+        for (name, fd) in self.iter(rom):
+            
+            if not self.filter(name, fd):
+                log_operation(f'Skipping {name}')
+                continue
+
+            dest = (Path(outdir) / name).with_suffix(f'.{self.ext}')
+            with open(dest, 'wb') as dest_fd:
+                log_operation(f'Dumping {dest} to disk')
+                # import os
+                
+                shutil.copyfileobj(fd, dest_fd)

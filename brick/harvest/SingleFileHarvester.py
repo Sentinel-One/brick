@@ -11,7 +11,7 @@ class SingleFileHarvester(AbstractHarvester):
     A 'pseudo-harvester' which operates on a single file.
     """
     
-    def harvest(self, rom, outdir):
+    def iter(self, rom):
 
         try:
             pefile.PE(rom)
@@ -32,9 +32,10 @@ class SingleFileHarvester(AbstractHarvester):
             # Valid UUID, try to get the corresponding friendly name.
             friendly_name = self.guid2name(basename)
         
-        smm_mod_path = Path(outdir) / friendly_name
-        if self.ext:
-            smm_mod_path = smm_mod_path.with_suffix(f'.{self.ext}')
+        yield (friendly_name, open(smm_pe, 'rb'))
+        # smm_mod_path = Path(outdir) / friendly_name
+        # if self.ext:
+        #     smm_mod_path = smm_mod_path.with_suffix(f'.{self.ext}')
 
-        log_operation(f'Dumping {friendly_name} to disk')
-        shutil.copy(rom, smm_mod_path)
+        # log_operation(f'Dumping {friendly_name} to disk')
+        # shutil.copy(rom, smm_mod_path)
