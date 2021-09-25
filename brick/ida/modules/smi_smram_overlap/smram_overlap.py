@@ -1,15 +1,10 @@
-from ...utils.protocol_recognizer import ProtocolMatcher
-from ...utils.function_matcher import FunctionMatcher
-from ..efiXplorer.efiXplorer_module import EfiXplorerModule
-from ..postprocessor.uefi.smm.smst import SmiHandlerRegisterCall
 from ..base_module import BaseModule
-from pathlib import Path
 
 from bip.base import *
 from bip.hexrays import *
 
 
-from ..buffer_outside_smm.smi import CommBufferSmiHandler, SmiHandler
+from ..smi_nested_pointers.smi import CommBufferSmiHandler
 from ...utils import bip_utils
 
 class SmramOverlapModule(BaseModule):
