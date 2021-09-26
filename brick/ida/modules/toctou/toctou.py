@@ -43,5 +43,9 @@ class ToctouModule(BaseModule):
 
             for member_name, occurences in nested_pointers.items():
                 if occurences > 1:
+                    self.res = False
                     self.logger.error(f'SMI {handler.name}: Comm buffer member {member_name} is fetched {occurences} times and might be subject to a TOCTOU attack')
-            # self.logger.info(nested_pointers)
+
+            if self.res:
+                self.logger.success('No double fetches from the Comm Buffer were encountered')
+                
