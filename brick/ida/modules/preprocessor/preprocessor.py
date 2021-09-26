@@ -1,6 +1,7 @@
 import ida_segment
 import idc
 import idaapi
+import codatify
 
 from bip.base import *
 from ..base_module import BaseModule
@@ -17,9 +18,8 @@ class PreprocessorModule(BaseModule):
         Use codatify to find functions that the initial auto-analysis missed.
         """
         try:
-            import codatify
             codatify.fix_code()
-        except ImportError:
+        except Exception:
             pass
 
         # Codatify sometimes does one of the following:
