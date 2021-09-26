@@ -47,7 +47,7 @@ class EfiXplorerModule(BaseModule):
         def FreePool_heuristic(f: BipFunction):
             # The prototype of the function must match EFI_STATUS (void *).
             if not (f.type.nb_args == 1 and \
-                    isinstance(f.type.get_arg_type(0), BTypePtr) and \
+                    isinstance(f.type.get_arg_type(0), (BTypePtr, BTypeInt)) and \
                     isinstance(f.type.return_type, (BTypeInt))):
                 return False
 
