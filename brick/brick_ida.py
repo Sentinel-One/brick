@@ -9,8 +9,9 @@ import os
 import logging
 import sys
 import traceback
+import idaapi
 from multiprocessing.connection import Client
-from .shared import NOTIFICATION_ADDRESS
+from shared import NOTIFICATION_ADDRESS
 
 def prompt_interactive_for_module_name():
     while True:
@@ -118,9 +119,9 @@ if __name__ == '__main__':
             try:
                 mod_cls = BRICK_MODULES_CLASSES[module]
                 mod_obj = mod_cls()
-                mod_obj.before()
+                take_snapshot(f'Before {module}')
                 mod_obj.run()
-                mod_obj.after()
+                take_snapshot(f'After {module}')
             except Exception as e:
                 tb = traceback.format_tb((sys.exc_info()[2]))
                 if is_interactive:
