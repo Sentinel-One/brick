@@ -53,15 +53,15 @@ class SmiHandler(BipFunction):
                     # Reads the SMM save state directly via gSmst->CpuSaveState[CpuIndex].
                     candidate = node
 
-            if isinstance(node, CNodeExprObj):
-                # Is this an access to an hardcoded address?
-                if re.match(self.memory_access_re, node.cstr):
-                    # Filter out write operations.
-                    if node.has_parent and isinstance(node.parent, CNodeExprAssignment) and node == node.parent.dst:
-                        # The MEMORY node is the destination and does not contribute to the overall attack surface.
-                        pass
-                    else:
-                        candidate = node
+            # if isinstance(node, CNodeExprObj):
+            #     # Is this an access to an hardcoded address?
+            #     if re.match(self.memory_access_re, node.cstr):
+            #         # Filter out write operations.
+            #         if node.has_parent and isinstance(node.parent, CNodeExprAssignment) and node == node.parent.dst:
+            #             # The MEMORY node is the destination and does not contribute to the overall attack surface.
+            #             pass
+            #         else:
+            #             candidate = node
 
             # Last but not least, make sure that the candidate node is reachable from the SMI.
             if candidate:
