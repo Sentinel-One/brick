@@ -4,7 +4,7 @@ from ..efiXplorer.efiXplorer_module import EfiXplorerModule
 from ..postprocessor.uefi.smm.smst import SmiHandlerRegisterCall
 from ..base_module import BaseModule
 from pathlib import Path
-from ...utils import brick_utils
+from ...utils import brick_utils, bip_utils
 
 from bip.base import *
 from bip.hexrays import *
@@ -20,7 +20,7 @@ class CheckNestedPointersModule(BaseModule):
 
     def match_SmmIsBufferOutsideSmmValid(self):
 
-        def _SIBOSV_heuristic(f):
+        def _SIBOSV_heuristic(f: BipFunction):
 
             # The prototype of the function must match BOOLEAN (EFI_PHYSICAL_ADDRESS, UINT64).
             if not (f.type.nb_args == 2 and \
@@ -32,9 +32,21 @@ class CheckNestedPointersModule(BaseModule):
             # The function must reference at least one SMRAM descriptor.
             for gSmramDescriptor in BipElt.get_by_prefix('gSmramDescriptor_'):
                 if f in gSmramDescriptor.xFuncTo:
-                    return True
+                    break
+            else:
+                # No reference to SMRAM descriptor.
+                return False
 
-            return False
+            # Check that all return statements are either 'return TRUE' or 'return FALSE'
+            rets = bip_utils.collect_cnode_filterlist(f.hxcfunc, lambda node: True, [CNodeStmtReturn])
+            for ret in rets:
+                if isinstance(ret.ret_val, CNodeExprNum) and ret.ret_val.value in (0, 1):
+                    continue
+                else:
+                    return False
+            
+            # Passed all the tests.
+            return True
 
         SIBOSV_recognizer = FunctionMatcher('SmmIsBufferOutsideSmmValid', is_library=True)
 
