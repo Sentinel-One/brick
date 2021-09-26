@@ -23,6 +23,7 @@ class EfiXplorerModule(BaseModule):
         super().__init__()
         self.known_false_positives = set()
         self.res_dir = Path(__file__).parent / 'res'
+        self.include_dir = Path(__file__).parent / 'include'
 
     @cached_property
     def smi_handlers(self):
@@ -74,7 +75,13 @@ the following call-outs are likely to be false positives''')
                 hex_addresses = [hex(ea) for ea in addresses]
                 self.logger.error(f'{vuln_type} occuring at {hex_addresses}')
 
+    def load_headers(self):
+        for header in self.include_dir.iterdir():
+            BipType.import_c_header(str(header))
+
     def run(self):
+        self.load_headers()
+        
         efiXplorer = EfiXplorerPlugin(self.input_file, self.is_64bit)
         efiXplorer.run(EfiXplorerPlugin.Args.DISABLE_UI)
 
