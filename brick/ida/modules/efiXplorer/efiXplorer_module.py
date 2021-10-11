@@ -82,17 +82,21 @@ class EfiXplorerModule(BaseModule):
             self.known_false_positives.add(FreePool_func.ea)
 
     def handle_smm_callouts(self, callouts):
+        
+        # Filter out the false positives.
         self.match_known_false_positives()
 
+        true_callouts = filter(lambda callout: BipFunction(callout).ea not in self.known_false_positives, callouts)
+        if not true_callouts:
+            return
+
         if bip_utils.search_guid(self.EFI_SMM_RUNTIME_SERVICES_TABLE_GUID):
-            self.logger.info('''Module references EFI_SMM_RUNTIME_SERVICES_TABLE_GUID,
+            self.logger.info('''Image references EFI_SMM_RUNTIME_SERVICES_TABLE_GUID,
 the following call-outs are likely to be false positives''')
+        else:
+            self.logger.error('The following call-outs might be true positives')
 
-        for callout in callouts:
-            if BipFunction(callout).ea in self.known_false_positives:
-                # We hit a known false-positive, skip that.
-                continue
-
+        for callout in true_callouts:
             for handler in self.smi_handlers:
                 for path in brick_utils.get_paths(handler, callout):
                     self.logger.verbose(self.format_path(path))
