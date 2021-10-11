@@ -110,6 +110,13 @@ class CommBufferSmiHandler(SmiHandler):
         '''Reconstructs the layout of the Communication Buffer.
         '''
 
+        # Set the type for the Comm Buffer to an integer.
+        # That might help in collapsing some casts in the decompiled pseudocode.
+        comm_buffer_arg = self.hxcfunc.args[2]
+        comm_buffer_arg.type = BipType.from_c('UINTN')
+        self.hxcfunc.invalidate_cache()
+
+        # print('Set comm buffer type to UINTN')
         comm_buffer_struct_name = f'CommBuffer_{self.hex_ea}'
 
         try:
@@ -128,7 +135,6 @@ class CommBufferSmiHandler(SmiHandler):
                 comm_buffer_struct_type = BipType.from_c(f'void *')
             
         # Set the type for the Comm Buffer
-        comm_buffer_arg = self.hxcfunc.args[2]
         comm_buffer_arg.type = comm_buffer_struct_type
         self.hxcfunc.invalidate_cache()
 
