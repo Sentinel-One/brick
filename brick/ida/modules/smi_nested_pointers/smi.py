@@ -22,6 +22,22 @@ class SmiHandler(BipFunction):
     def hex_ea(self):
         return hex(self.ea)[2:].lower()
 
+    @property
+    def DispatchHandle(self):
+        return self.hxcfunc.args[0]
+
+    @property
+    def Context(self):
+        return self.hxcfunc.args[1]
+
+    @property
+    def CommBuffer(self):
+        return self.hxcfunc.args[2]
+
+    @property
+    def CommBufferSize(self):
+        return self.hxcfunc.args[3]
+
     def check_prototype(self):
         # Do some sanity checks on the arguments.
         if not (self.type.nb_args == 4 and \
