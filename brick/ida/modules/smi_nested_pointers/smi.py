@@ -122,6 +122,10 @@ class CommBufferSmiHandler(SmiHandler):
         return super().attack_surface + \
                bip_utils.collect_cnode_filterlist(self.hxcfunc, lambda node: 'CommBuffer' == node.lvar_name, [CNodeExprVar])
 
+    def is_comm_buffer_used(self):
+        # Some SMI handlers don't use the CommBuffer at all.
+        return self.CommBuffer._lvar.used
+
     def reconstruct_comm_buffer(self):
         '''Reconstructs the layout of the Communication Buffer.
         '''
