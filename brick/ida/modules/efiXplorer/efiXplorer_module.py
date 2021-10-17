@@ -86,7 +86,7 @@ class EfiXplorerModule(BaseModule):
         # Filter out the false positives.
         self.match_known_false_positives()
 
-        true_callouts = filter(lambda callout: BipFunction(callout).ea not in self.known_false_positives, callouts)
+        true_callouts = [callout for callout in callouts if BipFunction(callout).ea not in self.known_false_positives]
         if not true_callouts:
             return
 
