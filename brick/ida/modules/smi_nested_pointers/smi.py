@@ -38,6 +38,18 @@ class SmiHandler(BipFunction):
     def CommBufferSize(self):
         return self.hxcfunc.args[3]
 
+    def is_DispatchHandle_used(self):
+        return self.DispatchHandle._lvar.used
+
+    def is_Context_used(self):
+        return self.Context._lvar.used
+
+    def is_CommBuffer_used(self):
+        return self.CommBuffer._lvar.used
+
+    def is_CommBufferSize_used(self):
+        return self.CommBufferSize._lvar.used
+
     def check_prototype(self):
         # Do some sanity checks on the arguments.
         if not (self.type.nb_args == 4 and \
@@ -121,10 +133,6 @@ class CommBufferSmiHandler(SmiHandler):
         # The CommBuffer is also a part of the attack surface.
         return super().attack_surface + \
                bip_utils.collect_cnode_filterlist(self.hxcfunc, lambda node: 'CommBuffer' == node.lvar_name, [CNodeExprVar])
-
-    def is_comm_buffer_used(self):
-        # Some SMI handlers don't use the CommBuffer at all.
-        return self.CommBuffer._lvar.used
 
     def reconstruct_comm_buffer(self):
         '''Reconstructs the layout of the Communication Buffer.
