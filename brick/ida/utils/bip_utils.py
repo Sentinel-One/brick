@@ -24,6 +24,25 @@ def collect_cnode_filterlist(hxcfunc, user_callback, filter_list):
 
     return matched_nodes
 
+def search_cnode_filterlist(hxcfunc: HxCFunc, user_callback, filter_list, recursive=False):
+    '''Searches the AST of a function for a given node.'''
+
+    def wrapper_callback(node: CNode):
+        if user_callback(node):
+            # Interrupt the search.
+            return False
+
+        if recursive and isinstance(node, CNodeExprCall):
+            if node.caller_func and node.caller_func.can_decompile:
+                return node.caller_func.hxcfunc.visit_cnode_filterlist(wrapper_callback, filter_list)
+
+    if recursive and CNodeExprCall not in filter_list:
+        filter_list.append(CNodeExprCall)
+
+    # Return whether or not the search was interrupted.
+    interrupted = not hxcfunc.visit_cnode_filterlist(wrapper_callback, filter_list)
+    return interrupted
+
 def search_bytes(byt, min_ea=None, max_ea=None):
     if min_ea is None: min_ea = BipIdb.min_ea()
     if max_ea is None: max_ea = BipIdb.max_ea()
