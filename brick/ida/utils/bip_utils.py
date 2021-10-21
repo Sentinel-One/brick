@@ -24,7 +24,7 @@ def collect_cnode_filterlist(hxcfunc, user_callback, filter_list):
 
     return matched_nodes
 
-def search_cnode_filterlist(hxcfunc: HxCFunc, user_callback, filter_list, recursive=False):
+def search_cnode_filterlist(hxcfunc: HxCFunc, user_callback, filter_list, recursive=False) -> bool:
     '''Searches the AST of a function for a given node.'''
 
     def wrapper_callback(node: CNode):
