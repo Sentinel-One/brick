@@ -19,18 +19,18 @@ class UefiCallFactory:
             call = self.get(cnode)
             if call is not None:
                 call.set_call_type()
-                call.hxcfunc.invalidate_cache()
 
         def _process_call_callback(cnode: CNode):
             call = self.get(cnode)
             if call is not None:
                 call.process()
-                call.hxcfunc.invalidate_cache()
 
         # 1st pass - apply correct prototype.
         for hxcfunc in HxCFunc.iter_all():
             hxcfunc.visit_cnode_filterlist(_apply_type_callback, [CNodeExprCall])
+            hxcfunc.invalidate_cache()
 
         # 2nd pass - further process the call.
         for hxcfunc in HxCFunc.iter_all():
             hxcfunc.visit_cnode_filterlist(_process_call_callback, [CNodeExprCall])
+            hxcfunc.invalidate_cache()
