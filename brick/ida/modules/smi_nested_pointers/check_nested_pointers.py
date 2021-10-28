@@ -1,7 +1,5 @@
 from ...utils.protocol_matcher import ProtocolMatcher
 from ...utils.function_matcher import FunctionMatcher
-from ..efiXplorer.efiXplorer_module import EfiXplorerModule
-from ..postprocessor.uefi.smm.smst import SmiHandlerRegisterCall
 from ..base_module import BaseModule
 from pathlib import Path
 from ...utils import brick_utils, bip_utils
@@ -10,7 +8,7 @@ from bip.base import *
 from bip.hexrays import *
 
 
-from .smi import CommBufferSmiHandler, SmiHandler
+from .smi import CommBufferSmiHandler, LegacySwSmiHandler, SmiHandler
 
 
 class CheckNestedPointersModule(BaseModule):
@@ -83,24 +81,66 @@ class CheckNestedPointersModule(BaseModule):
         # Check if the Comm Buffer has any nested pointers
         return any(isinstance(child, BTypePtr) for child in comm_buffer_type.children[0].children)
 
-    def run(self):
-        SmmIsBufferOutsideSmmValid = self.match_SmmIsBufferOutsideSmmValid()
-        (_, instances) = self.match_AMI_SMM_BUFFER_VALIDATION_PROTOCOL()
+    def _scan_comm_buffer_smis(self):
 
-        for handler in SmiHandler.iter_all():
+        for handler in CommBufferSmiHandler.iter_all():
+
+            if not handler.CommBuffer._lvar.used:
+                # CommBuffer is not used.
+                self.logger.verbose(f'SMI {handler.name} does not reference CommBuffer')
+                continue
+
+            def _is_smm_validation(node: CNodeExprCall):
+                if 'SmmIsBufferOutsideSmmValid' in node.cstr or '->ValidateMemoryBuffer' in node.cstr:
+                    buffer = node.args[0].ignore_cast
+                    
+                    if isinstance(buffer, CNodeExprVar) and buffer.lvar == handler.CommBuffer:
+                        # Validates the CommBuffer itself.
+                        return False
+
+                    # Validates something else. A nested pointer maybe?
+                    return True
+
+            # Recursively scan calls made by the handler.
+            if bip_utils.search_cnode_filterlist(handler.hxcfunc, _is_smm_validation, [CNodeExprCall], recursive=True):
+                self.logger.success(f'SMI {handler.name} seems to validate any pointers nested in the CommBuffer')
+                continue
+
+            # The handler does not call SmmIsBufferOutsideSmmValid or equivalent function.
+            # Reconstruct the CommBuffer to determine the severity.
+            comm_buffer_type = handler.reconstruct_comm_buffer()
+
+            # Check if the Comm Buffer holds any nested pointers
+            if any(isinstance(member, BTypePtr) for member in comm_buffer_type.children[0].children):
+                self.logger.error(f'SMI {handler.name} does not validate pointers nested in the CommBuffer')
+            else:
+                self.logger.warning(f'SMI {handler.name} does not validate pointers nested in the CommBuffer')
+
+    def _scan_legacy_sw_smis(self):
+
+        for handler in LegacySwSmiHandler.iter_all():
+
             if not handler.attack_surface:
+                # No attack surface, for example an SMI handler that doesn't call ReadSaveState().
                 self.logger.verbose(f'SMI {handler.name} does not expose any attack surface')
                 continue
 
-            if brick_utils.path_exists(handler, SmmIsBufferOutsideSmmValid) or \
-               any(brick_utils.path_exists(handler, instance) for instance in instances):
-                # Handler uses verification services.
-                self.logger.verbose(f'SMI {handler.name} seems secure')
+            def _is_smm_validation(node: CNodeExprCall):
+                if 'SmmIsBufferOutsideSmmValid' in node.cstr or '->ValidateMemoryBuffer' in node.cstr:
+                    return True
+
+            # Recursively scan calls made by the handler.
+            if bip_utils.search_cnode_filterlist(handler.hxcfunc, _is_smm_validation, [CNodeExprCall], recursive=True):
+                self.logger.success(f'SMI {handler.name} seems to validate any externally provided pointers')
                 continue
 
-            self.logger.error(f'SMI {handler.name} does not validate the comm buffer, check for unprotected nested pointers')
-            if isinstance(handler, CommBufferSmiHandler):
-                comm_buffer_type = handler.reconstruct_comm_buffer()
-                if self._has_nested_pointers(comm_buffer_type):
-                    self.logger.warning(f'SMI {handler.name} has nested pointers in the communication buffer')
-                    
+            # Low confidence in the detection, so issue a warning instead of an error.
+            self.logger.warning(f'SMI {handler.name} does not validate externally provided pointers')
+
+    def run(self):
+        SmmIsBufferOutsideSmmValid = self.match_SmmIsBufferOutsideSmmValid()
+        (_, instances) = self.match_AMI_SMM_BUFFER_VALIDATION_PROTOCOL()
+        
+        self._scan_comm_buffer_smis()
+        self._scan_legacy_sw_smis()
+        
