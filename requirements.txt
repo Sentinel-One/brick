@@ -5,3 +5,4 @@ find-ida-user-dir
 yattag
 pefile
 gorilla
+progressbar2
