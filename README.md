@@ -14,6 +14,7 @@ brick is a small tool designed to identify potentially vulnerable SMM modules in
 `pip install -r requirements.txt`
 * Install [Bip](https://github.com/synacktiv/bip)
 * Install [Rizzo](https://github.com/tacnetsol/ida/tree/master/plugins/rizzo)
+* Install [Fingermatch](https://github.com/jendabenda/fingermatch)
 
 ## Usage
 * Obtain a dump of the firmware image you wish to scan.
