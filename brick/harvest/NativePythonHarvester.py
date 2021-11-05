@@ -42,5 +42,5 @@ class NativePythonHarvester(AbstractHarvester):
                 friendly_name = self.guid2name(section.guid_label)
 
             stream = BytesIO(content)
-            yield stream
+            yield (friendly_name, stream)
             
