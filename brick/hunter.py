@@ -14,7 +14,7 @@ class Hunter:
         self.ext = ext
         self.verbose = verbose
         self.max_ida = multiprocessing.cpu_count()
-        self.version = 7.6
+        self.version = 7.7
 
     def _run_idahunt(self, user_args):
         idahunt_main = str(self.IDAHUNT_DIR / 'idahunt.py')

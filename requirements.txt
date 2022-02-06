@@ -6,3 +6,4 @@ yattag
 pefile
 gorilla
 progressbar2
+requests
