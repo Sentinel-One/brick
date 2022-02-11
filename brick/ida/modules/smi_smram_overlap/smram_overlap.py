@@ -3,7 +3,7 @@ from ..base_module import BaseModule
 from bip.base import *
 from bip.hexrays import *
 
-
+from ..efiXplorer.efiXplorer_module import EfiXplorerModule
 from ..smi_nested_pointers.smi import CommBufferSmiHandler
 
 class SmramOverlapModule(BaseModule):
@@ -15,6 +15,8 @@ class SmramOverlapModule(BaseModule):
 
     def __init__(self) -> None:
         super().__init__()
+
+    DEPENDS_ON = [EfiXplorerModule]
 
     @staticmethod
     def derefs_CommBufferSize(handler: CommBufferSmiHandler):

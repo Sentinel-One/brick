@@ -1,6 +1,7 @@
 from ...utils.protocol_matcher import ProtocolMatcher
 from ...utils.function_matcher import FunctionMatcher
 from ..base_module import BaseModule
+from ..efiXplorer.efiXplorer_module import EfiXplorerModule
 from pathlib import Path
 from ...utils import brick_utils, bip_utils
 
@@ -15,6 +16,8 @@ class CheckNestedPointersModule(BaseModule):
 
     def __init__(self) -> None:
         super().__init__()
+
+    DEPENDS_ON = [EfiXplorerModule]
 
     def match_SmmIsBufferOutsideSmmValid(self):
 

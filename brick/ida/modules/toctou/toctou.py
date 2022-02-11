@@ -5,13 +5,15 @@ from bip.hexrays import *
 
 
 from ..smi_nested_pointers.smi import CommBufferSmiHandler
-
+from ..efiXplorer.efiXplorer_module import EfiXplorerModule
 
 class ToctouModule(BaseModule):
 
     def __init__(self) -> None:
         super().__init__()
         self.field_re = re.compile('CommBuffer->(field_.+)')
+
+    DEPENDS_ON = [EfiXplorerModule]
 
     def run(self):
         

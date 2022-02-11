@@ -15,6 +15,8 @@ class IsEdk2Module(BaseModule):
     def __init__(self) -> None:
         super().__init__()
 
+    DEPENDS_ON = []
+
     def run(self):
         edk2_names = [n.name.lower() for n in GuidList.guidlist_from_filesystem(self.EDK2_DIR)]
         edk2_guids = [g.guid.lower() for g in GuidList.guidlist_from_filesystem(self.EDK2_DIR)]

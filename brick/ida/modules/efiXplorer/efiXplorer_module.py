@@ -5,6 +5,7 @@ from .efiXplorer_plugin import EfiXplorerPlugin
 from pathlib import Path
 
 from ..base_module import BaseModule
+from ..preprocessor.preprocessor import PreprocessorModule
 from ...utils import brick_utils, bip_utils
 from ...utils.function_matcher import FunctionMatcher
 
@@ -18,6 +19,8 @@ class EfiXplorerModule(BaseModule):
     '''
 
     EFI_SMM_RUNTIME_SERVICES_TABLE_GUID = GuidsDatabase().name2guid['SmmRsTableGuid']
+
+    DEPENDS_ON = [PreprocessorModule]
 
     def __init__(self) -> None:
         super().__init__()

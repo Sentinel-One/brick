@@ -12,6 +12,7 @@ import traceback
 import idaapi
 from multiprocessing.connection import Client
 from shared import NOTIFICATION_ADDRESS
+from collections import OrderedDict
 
 def prompt_interactive_for_module_name():
     while True:
@@ -91,9 +92,30 @@ def take_snapshot(desc):
     idaapi.take_database_snapshot(snapshot)
 
 def signal_module_completion():
-    # Make a connection to signal the analysis is complete.
-    conn = Client(NOTIFICATION_ADDRESS)
-    conn.close()
+    try:
+        # Make a connection to signal the analysis is complete.
+        conn = Client(NOTIFICATION_ADDRESS)
+        conn.close()
+    except ConnectionRefusedError:
+        pass
+
+def eval_dependencies(module):
+    if module.DEPENDS_ON == []:
+        return [module]
+
+    eval_order = []
+    for dep in module.DEPENDS_ON:
+        eval_order.extend(eval_dependencies(dep))
+
+    return eval_order + [module]
+
+def eval_all_dependencies(*modules):
+    depends = []
+    for module in modules:
+        mod_cls = BRICK_MODULES_CLASSES[module]
+        depends.extend(eval_dependencies(mod_cls))
+    # trim repeating modules
+    return list(OrderedDict.fromkeys(depends))
 
 if __name__ == '__main__':
     if len(idc.ARGV) < 2:
@@ -113,15 +135,17 @@ if __name__ == '__main__':
         pass
 
     is_interactive = "DO_EXIT" not in os.environ
-    
+
+    modules_to_run = eval_all_dependencies(*modules)
+    print(f'Modules to run {modules_to_run}')
+
     with setup_brick_logger() as logger:
-        for module in modules:
+        for mod_cls in modules_to_run:
             try:
-                mod_cls = BRICK_MODULES_CLASSES[module]
                 mod_obj = mod_cls()
-                take_snapshot(f'Before {module}')
+                # take_snapshot(f'Before {module}')
                 mod_obj.run()
-                take_snapshot(f'After {module}')
+                # take_snapshot(f'After {module}')
             except Exception as e:
                 tb = traceback.format_tb((sys.exc_info()[2]))
                 if is_interactive:

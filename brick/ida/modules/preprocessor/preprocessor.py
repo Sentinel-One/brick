@@ -8,6 +8,8 @@ from ..base_module import BaseModule
 
 class PreprocessorModule(BaseModule):
 
+    DEPENDS_ON = []
+
     def _set_text_section_rwx(self):
         text_section = ida_segment.get_segm_by_name('.text')
         if text_section:

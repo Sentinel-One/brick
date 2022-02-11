@@ -12,6 +12,8 @@ class BaseModule(ABC):
         self.input_file = idaapi.get_input_file_path()
         self.is_64bit = idaapi.get_inf_structure().is_64bit()
 
+    DEPENDS_ON = []
+
     @abstractmethod
     def run(self):
         # Should be overriden by subclasses.

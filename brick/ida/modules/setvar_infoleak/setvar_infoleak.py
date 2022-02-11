@@ -1,5 +1,6 @@
 from ..base_module import BaseModule
 from ...utils import brick_utils
+from ..efiXplorer.efiXplorer_module import EfiXplorerModule
 
 from bip.base import *
 from bip.hexrays import *
@@ -15,6 +16,8 @@ class SetVarInfoLeakModule(BaseModule):
             void * Data
         )"""
     
+    DEPENDS_ON = [EfiXplorerModule]
+
     def __init__(self) -> None:
         super().__init__()
         self.GetVariable_calls = []
