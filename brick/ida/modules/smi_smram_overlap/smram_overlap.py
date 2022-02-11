@@ -18,6 +18,9 @@ class SmramOverlapModule(BaseModule):
 
     @staticmethod
     def derefs_CommBufferSize(handler: CommBufferSmiHandler):
+        if not handler.CommBufferSize._lvar.used:
+            # CommBufferSize is not touched at all.
+            return False
 
         def _derefs_CommBufferSize(node: CNodeExprPtr):
             '''Does the node correspond to a dereference operation on CommBufferSize? (i.e. *CommBufferSize)'''
@@ -53,27 +56,28 @@ class SmramOverlapModule(BaseModule):
 
             if not handler.CommBuffer._lvar.used:
                 # If the CommBuffer is not referenced at all, the handler is assumed to be safe.
+                self.logger.success(f'SMI {handler} considered safe: does not reference the CommBuffer at all')
                 continue
-
-            if not handler.CommBufferSize._lvar.used:
-                # If CommBufferSize is not referenced at all, the handler is potentially vulnerable.
-                self.res = False
-                self.logger.error(f'SMI {handler.name} does not reference CommBufferSize, check for potential overlap with SMRAM')
-                continue
-
-            # If we got here, it means CommBufferSize is referenced. Still, to mark the handler as safe CommBufferSize must either either be:
-            # 1. Dereferenced to retrieve the actual size (*CommBufferSize)
-            # 2. Passed to a buffer validation routine such as SmmIsBufferOutsideSmmValid.
 
             if self.derefs_CommBufferSize(handler):
                 # The handler checks that the CommBuffer does not overlap SMRAM simply by dereferencing the
-                # CommBufferSize argument.
+                # CommBufferSize argument and probably comparing it against a hardcoded value.
+                # This is safe because SmmEntryPoint calls SmmIsBufferOutsideSmmValid(CommBuffer, *CommBufferSize)
+                # prior to passing control to the handler.
+                self.logger.success(f'SMI {handler} considered safe: derefernces *CommBufferSize')
                 continue
-            
+
             if self.validates_CommBuffer_not_in_smram(handler):
-                # The handler checks that the CommBuffer does not overlap SMRAM by passing it to a validation routine
-                # such as SmmIsBufferOutsideSmmValid.
+                # Even if that handler does not reference CommBufferSize, it can still make the
+                # CommBuffer does not overlap with SMRAM simply by passing it to a validation
+                # routine such as SmmIsBufferOutsideSmmValid, alongside the size of the expected input
+                # e.g. SmmIsBufferOutsideSmmValid(CommBuffer, 100)
+                self.logger.success(f'SMI {handler} considered safe: passes the CommBuffer to a validation routine')
                 continue
+
+            # If we got here, the handler can potentially be abused by attackers to corrupt the
+            # lower portion of SMRAM.
+            self.logger.error(f'SMI {handler} considered vulnerable: might be abused to corrupt the lower portion of SMRAM')
 
         if self.res:
             self.logger.success('No SMI that omits checking CommBufferSize was found')
