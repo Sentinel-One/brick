@@ -2,6 +2,7 @@ BRICK_FULL_RUN_MODULES = (
     'preprocessor',
     'efiXplorer',
     'postprocessor',
+    'callouts',
     'smm_buffer',
     'smram_overlap',
     'toctou',
@@ -25,6 +26,7 @@ BRICK_MODULES_DESCRIPTIONS = {
     'preprocessor': 'Pre-processing',
     'efiXplorer': 'Analyzing a SMM binary with efiXplorer',
     'postprocessor': 'Post-processing',
+    'callouts': 'Detects SMM callouts',
     'smm_buffer': 'Scanning for SMI handlers not calling SmmIsBufferOutsideSmmValid() or equivalent on the CommBuffer',
     'toctou': 'Scanning for SMI handlers that are subject to a TOCTOU attack',
     'legacy_protocols': 'Scanning for SMM modules which use legacy or deprecated protocols',
@@ -43,8 +45,9 @@ except ImportError:
 
 if in_ida:
     from .preprocessor.preprocessor import PreprocessorModule
-    from .efiXplorer.efiXplorer_module import EfiXplorerModule
+    from .callouts.callouts import EfiXplorerModule
     from .postprocessor.postprocessor import PostprocessorModule
+    from .callouts.callouts import SmmCalloutsModule
     from .cseg.scan_cseg import CsegOnlyModule
     from .legacy_protocols.legacy_protocols import LegacyProtocolsModule
     from .reference_code.is_edk2 import IsEdk2Module
@@ -57,6 +60,7 @@ if in_ida:
         'preprocessor': PreprocessorModule,
         'efiXplorer': EfiXplorerModule,
         'postprocessor': PostprocessorModule,
+        'callouts': SmmCalloutsModule,
         'smm_buffer': CheckNestedPointersModule,
         'smram_overlap': SmramOverlapModule,
         'toctou': ToctouModule,
