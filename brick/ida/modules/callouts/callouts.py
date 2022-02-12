@@ -127,5 +127,5 @@ class SmmCalloutsModule(BaseModule):
         efiXplorer = EfiXplorerPlugin(self.input_file, self.is_64bit)
         results = efiXplorer.get_results()
 
-        callouts = results.get('vulns', {}).get('smm_callout')
+        callouts = results.get('vulns', {}).get('smm_callout', [])
         self.handle_smm_callouts(callouts)
