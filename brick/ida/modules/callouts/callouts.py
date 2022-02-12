@@ -80,9 +80,6 @@ class SmmCalloutsModule(BaseModule):
         if FreePool_func := FreePool_matcher.match_by_heuristic(FreePool_heuristic, decompiler_required=True):
             self.known_false_positives.add(FreePool_func.ea)
 
-        elif FreePool_func := FreePool_matcher.match_by_diaphora(self.res_dir / 'SmmMemoryAllocationLib.sqlite', 0.8):
-            self.known_false_positives.add(FreePool_func.ea)
-
     def _find_next_call(self, ea, limit=10):
         ins = BipInstr(ea)
         i = 0
