@@ -3,12 +3,17 @@ import idc
 import idaapi
 import codatify
 
+from pathlib import Path
 from bip.base import *
 from ..base_module import BaseModule
 
 class PreprocessorModule(BaseModule):
 
     DEPENDS_ON = []
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.include_dir = Path(__file__).parent / 'include'
 
     def _set_text_section_rwx(self):
         text_section = ida_segment.get_segm_by_name('.text')
@@ -43,8 +48,13 @@ class PreprocessorModule(BaseModule):
                     idc.del_func(f.ea)
                     BipFunction.create(new_ea)
 
+    def load_headers(self):
+        for header in self.include_dir.iterdir():
+            BipType.import_c_header(str(header))
+
     def run(self):
         # Fix permissions for the code section
         self._set_text_section_rwx()
         # Find functions that the initial auto-analysis might have missed.
         self._find_missing_functions()
+        self.load_headers()

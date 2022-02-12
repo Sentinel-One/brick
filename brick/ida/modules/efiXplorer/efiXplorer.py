@@ -77,8 +77,6 @@ class EfiXplorerModule(BaseModule):
 
     DEPENDS_ON = [PreprocessorModule]
 
-    def run(self):
-        # self.load_headers()
-        
+    def run(self):        
         efiXplorer = EfiXplorerPlugin(self.input_file, self.is_64bit)
         efiXplorer.run(EfiXplorerPlugin.Args.DISABLE_UI)
