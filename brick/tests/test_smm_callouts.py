@@ -20,3 +20,7 @@ def test_true_callout():
     scan_file('bin/0511.efi', 'callouts')
     assert text_in_file('ERROR (callouts.py)', 'bin/0511.brick')
     
+def test_no_callouts():
+    scan_file('bin/WwanSmm.efi', 'callouts')
+    assert text_in_file('SUCCESS (callouts.py)', 'bin/WwanSmm.brick')
+    
