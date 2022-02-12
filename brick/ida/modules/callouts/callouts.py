@@ -98,24 +98,33 @@ class SmmCalloutsModule(BaseModule):
         # Filter out the false positives.
         self.match_known_false_positives()
 
-        true_callouts = [callout for callout in callouts if BipFunction(callout).ea not in self.known_false_positives]
-        if not true_callouts:
-            self.logger.success('No SMM callouts were identified')
-            return
-
         smm_rt_present = bip_utils.search_guid(self.EFI_SMM_RUNTIME_SERVICES_TABLE_GUID)
 
-        for callout in true_callouts:
+        for callout in callouts:
 
-            if smm_rt_present:
-                call_ins = self._find_next_call(callout)
-                if call_ins and 'EFI_RUNTIME_SERVICES' in call_ins.op(0).str:
+            if BipFunction(callout).ea in self.known_false_positives:
+                # This is a function that is known to generate false positives,
+                # e.g. FreePool() from EDK2.
+                continue
+
+            call_ins = self._find_next_call(callout)
+            
+            if smm_rt_present:    
+                if call_ins is not None and 'EFI_RUNTIME_SERVICES' in call_ins.op(0).str:
+                    # The module references EFI_SMM_RUNTIME_SERVICES_TABLE, so chances are all
+                    # calls to UEFI runtime services are actually *NOT* callouts
                     continue
 
+            # If we got here, we have some true callouts.
             for handler in self.smi_handlers:
                 for path in brick_utils.get_paths(handler, callout):
                     self.logger.info(self.format_path(path))
-                    self.logger.info(call_ins.str)
+                    if call_ins is not None:
+                        self.logger.info(call_ins.str)
+                    self.res = False
+
+        if self.res:
+            self.logger.success('No SMM callouts were identified')
 
     def run(self):
         efiXplorer = EfiXplorerPlugin(self.input_file, self.is_64bit)
