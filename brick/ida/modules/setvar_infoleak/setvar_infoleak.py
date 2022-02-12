@@ -1,6 +1,6 @@
 from ..base_module import BaseModule
 from ...utils import brick_utils
-from ..efiXplorer.efiXplorer_module import EfiXplorerModule
+from ..efiXplorer.efiXplorer import EfiXplorerModule
 
 from bip.base import *
 from bip.hexrays import *

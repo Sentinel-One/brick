@@ -5,7 +5,7 @@ from bip.hexrays import *
 
 
 from ..smi_nested_pointers.smi import CommBufferSmiHandler
-from ..efiXplorer.efiXplorer_module import EfiXplorerModule
+from ..efiXplorer.efiXplorer import EfiXplorerModule
 
 class ToctouModule(BaseModule):
 

@@ -1,7 +1,7 @@
 from ...utils.protocol_matcher import ProtocolMatcher
 from ...utils.function_matcher import FunctionMatcher
 from ..base_module import BaseModule
-from ..efiXplorer.efiXplorer_module import EfiXplorerModule
+from ..efiXplorer.efiXplorer import EfiXplorerModule
 from pathlib import Path
 from ...utils import brick_utils, bip_utils
 

@@ -3,7 +3,7 @@ from ..base_module import BaseModule
 from bip.base import *
 from bip.hexrays import *
 
-from ..efiXplorer.efiXplorer_module import EfiXplorerModule
+from ..efiXplorer.efiXplorer import EfiXplorerModule
 from ..smi_nested_pointers.smi import CommBufferSmiHandler
 
 class SmramOverlapModule(BaseModule):
