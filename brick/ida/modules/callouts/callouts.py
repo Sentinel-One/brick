@@ -67,7 +67,7 @@ class SmmCalloutsModule(BaseModule):
 
         for callout in callouts:
 
-            if BipFunction(callout).ea in self.known_false_positives:
+            if BipFunction(callout) in self.known_false_positives:
                 # This is a function that is known to generate false positives,
                 # e.g. FreePool() from EDK2.
                 continue
@@ -83,7 +83,7 @@ class SmmCalloutsModule(BaseModule):
             # If we got here, we have some true callouts.
             for handler in self.smi_handlers:
                 for path in brick_utils.get_paths(handler, callout):
-                    self.logger.info(self.format_path(path))
+                    self.logger.error(self.format_path(path))
                     if call_ins is not None:
                         self.logger.info(call_ins.str)
                     self.res = False
