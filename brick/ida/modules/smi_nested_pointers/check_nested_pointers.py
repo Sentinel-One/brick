@@ -63,18 +63,6 @@ class CheckNestedPointersModule(BaseModule):
 
         return None
 
-    def match_AMI_SMM_BUFFER_VALIDATION_PROTOCOL(self):
-
-        AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID = '{da473d7f-4b31-4d63-92b7-3d905ef84b84}'
-
-        # Some SMM modules use the AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID protocol instead of calling
-        # SmmIsBufferOutsideSmmValid directly.
-        ASBVP_matcher = ProtocolMatcher(AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID, 'AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID', is_smm=True)
-        ASBVP_matcher.match()
-        return ASBVP_matcher.get()
-        # For now just returns the 1st instance.
-        # return ASBVP_recognizer.get().Instances[0]
-
     @staticmethod
     def _has_nested_pointers(comm_buffer_type):
         '''
@@ -142,7 +130,6 @@ class CheckNestedPointersModule(BaseModule):
 
     def run(self):
         SmmIsBufferOutsideSmmValid = self.match_SmmIsBufferOutsideSmmValid()
-        (_, instances) = self.match_AMI_SMM_BUFFER_VALIDATION_PROTOCOL()
         
         self._scan_comm_buffer_smis()
         self._scan_legacy_sw_smis()
