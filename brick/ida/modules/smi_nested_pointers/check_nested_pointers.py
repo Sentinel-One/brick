@@ -55,12 +55,6 @@ class CheckNestedPointersModule(BaseModule):
         if sibosv:
             return sibosv
 
-        # We know that SmmLockBox contains multiple calls to SmmIsBufferOutsideSmmValid()
-        smm_lock_box_database = str(Path(__file__).parent / 'SmmLockBox.efi.sqlite')
-        sibosv = SIBOSV_recognizer.match_by_diaphora(smm_lock_box_database, 0.75)
-        if sibosv:
-            return sibosv
-
         return None
 
     @staticmethod
