@@ -26,6 +26,7 @@ class PreprocessorModule(BaseModule):
         super().__init__()
         self.include_dir = Path(__file__).parent / 'include'
         self.edk2 = get_external('edk2')
+        self.edk2_platforms = get_external('edk2-platforms')
 
     def _set_text_section_rwx(self):
         text_section = ida_segment.get_segm_by_name('.text')
@@ -74,16 +75,17 @@ class PreprocessorModule(BaseModule):
             BipType.import_c_header(str(header))
 
         # EDK2 includes
-        header_path = ida_typeinf.get_c_header_path()
-        for include_dir in self.edk2.rglob('*/Include'):
-            if not include_dir.is_dir():
-                continue
-            header_path += f";{include_dir.as_posix()}"
-        ida_typeinf.set_c_header_path(header_path)
+        for root in (self.edk2, self.edk2_platforms):
+            header_path = ida_typeinf.get_c_header_path()
+            for include_dir in root.rglob('*/Include'):
+                if not include_dir.is_dir():
+                    continue
+                header_path += f";{include_dir.as_posix()}"
+            ida_typeinf.set_c_header_path(header_path)
 
-        for include in self.edk2.rglob('Include/Protocol/*.h'):
-            ret = BipType.import_c_header(str(include))
-            print(f'Loading {str(include)}: {ret}')
+            for include in root.rglob('Include/Protocol/*.h'):
+                ret = BipType.import_c_header(str(include))
+                print(f'Loading {str(include)}: {ret}')
 
     def run(self):
         # Fix permissions for the code section
