@@ -52,7 +52,7 @@ class CheckNestedPointersModule(BaseModule):
         return True
 
     def run(self):        
-        SmmIsBufferOutsideSmmValid().match()
+        SmmIsBufferOutsideSmmValid().match(decompiler_required=True)
         for handler in CommBufferSmiHandler.iter_all():
             if self._is_handler_vulnerable(handler):
                 self.logger.error(f'SMI Handler {handler} does not validate pointers in the Communication Buffer')
