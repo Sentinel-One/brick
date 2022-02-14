@@ -1,116 +1,86 @@
 from ..base_module import BaseModule
-from ...utils import brick_utils
 from ..efiXplorer.efiXplorer import EfiXplorerModule
+from ..postprocessor.postprocessor import PostprocessorModule
+from ..postprocessor.uefi.rt.GetVariable import GetVariableCall
+from ..postprocessor.uefi.rt.SetVariable import SetVariableCall
 
 from bip.base import *
 from bip.hexrays import *
 
 class SetVarInfoLeakModule(BaseModule):
-
-    SET_VARIABLE_PROTOTYPE = """EFI_STATUS
-        (__fastcall *) (
-            CHAR16 *VariableName,
-            EFI_GUID *VendorGuid,
-            UINT32 Attributes,
-            UINTN DataSize,
-            void * Data
-        )"""
     
-    DEPENDS_ON = [EfiXplorerModule]
+    DEPENDS_ON = [PostprocessorModule, EfiXplorerModule]
 
     def __init__(self) -> None:
         super().__init__()
-        self.GetVariable_calls = []
-        self.SetVariable_calls = []
-        # A dictionary that maps a variable name to a list of functions that called GetVariable() on it.
-        self.var_name_to_GetVariable = {}
-
-    def fix_SetVariable_prototype(self):
-        
-        def _call_node_callback(cnode):
-            if '->SetVariable' in cnode.cstr or '->SmmSetVariable' in cnode.cstr:
-                brick_utils.set_indirect_call_type(cnode.ea, self.SET_VARIABLE_PROTOTYPE)
-                cnode.hxcfunc.invalidate_cache()
-
-        for hxf in HxCFunc.iter_all():
-            try:
-                hxf.visit_cnode_filterlist(_call_node_callback, [CNodeExprCall])
-            except Exception as e:
-                self.logger.debug(e)
 
     @staticmethod
-    def get_variable_name(node):
-        var_name = None
+    def _friendly_name(node):
+        '''Tries to return the variable name as a string'''
 
+        node = node.ignore_cast
         if isinstance(node, CNodeExprRef):
             # if we have a ref (&something) we want the object under
             node = node.ops[0].ignore_cast
 
-        if isinstance(node, CNodeExprVar):
-            # Local variable.
-            var_name = node.lvar_name
-        
         if isinstance(node, CNodeExprObj):
             # if this is a global object, get name of variable from memory.
-            var_name = BipData.get_c16string(node.value)
-            
-        if not var_name:
-            # Fallback, just use the C-string.
-            var_name =  node.cstr
+            return BipData.get_c16string(node.value)
 
-        return var_name
+        if isinstance(node, CNodeExprVar):
+            # Local variable.
+            return node.lvar_name
 
-    def collect_GetSetVariable_calls(self):
+        # Fallback, just use the C-string.
+        return node.cstr
 
-        def callback(cn):
-            if "->GetVariable" in cn.cstr or '->SmmGetVariable' in cn.cstr:
-                self.GetVariable_calls.append(cn)
+    def validate_function(self, f: HxCFunc):
 
-            if "->SetVariable" in cn.cstr or '->SmmSetVariable' in cn.cstr:
-                self.SetVariable_calls.append(cn)
+        # Variables that were encountered so far.
+        variables = set()
 
-        for hxf in HxCFunc.iter_all():
-            try:
-                hxf.visit_cnode_filterlist(callback, [CNodeExprCall])
-            except Exception as e:
-                self.logger.debug(e)
+        def _handle_get_set_variable(node: CNodeExprCall):
+            if any(f'->{x}' in node.cstr for x in ('GetVariable', 'SmmGetVariable')):
+                # Handle GetVariable
+                get_variable_call = GetVariableCall.from_cnode(node)
+                print(get_variable_call)
+                
+                variable_name = self._friendly_name(get_variable_call.VariableName)
+                variables.add(variable_name)
+                
+            elif any(f'->{x}' in node.cstr for x in ('SetVariable', 'SmmSetVariable')):
+                # Handle SetVariable
+                set_variable_call = SetVariableCall.from_cnode(node)
+                print(set_variable_call)
+                
+                variable_name = self._friendly_name(set_variable_call.VariableName)
+                if variable_name not in variables:
+                    # Variable was set without being retrieved first, benign case.
+                    return
+                
+                data_size = set_variable_call.DataSize
+                if not isinstance(data_size, CNodeExprNum):
+                    # DataSize is not a constant, benign case.
+                    return
 
-    def process_GetVariable_calls(self):
-        # Process calls to GetVariable()
-        for call in self.GetVariable_calls:
-            varname = self.get_variable_name(call.get_arg(0))
-            if self.var_name_to_GetVariable.get(varname):
-                # Variable was encountered before.
-                self.var_name_to_GetVariable[varname].extend([call.hxcfunc.ea])
-            else:
-                # First time.
-                self.var_name_to_GetVariable[varname] = [call.hxcfunc.ea]
+                if data_size.value == 0:
+                    # DataSize = 0 is used to denote deleting a variable, benign case.
+                    return
 
-    def process_SetVariable_calls(self):
-        # Process calls to SetVariable()
-        for call in self.SetVariable_calls:
-            varname = self.get_variable_name(call.get_arg(0))
-            if not self.var_name_to_GetVariable.get(varname):
-                # Variable was written without being fetched first, benign case.
-                continue
-
-            func_ea = call.hxcfunc.ea
-            if func_ea not in self.var_name_to_GetVariable[varname]:
-                # Function that sets the variable is differnet from the function that fetched it, probably benign.
-                continue
-
-            # If we got here, the function that sets the variable is the same as the function that reads it.
-            # Now, we have to make sure the size argument passed to SetVariable is a constant integer greater than zero.
-            varsize = call.get_arg(3)
-            if isinstance(varsize, CNodeExprNum) and (varsize.value != 0):
+                # If we got here, a variable that was already retrieved by the function is now
+                # being set using a hardcoded size, which might disclose sensitive data.
                 self.res = False
-                self.logger.error(f'Variable {varname} is read by function 0x{func_ea:x} and then written again using constant size 0x{varsize.value:x}')
+                self.logger.error(f'Function {f.bfunc.name} discloses up to {data_size.value} SMRAM bytes while calling SetVariable() on {variable_name}')
+                
+            else:
+                # Nothing interesting
+                pass
 
-        if self.res:
-            self.logger.success(f'No potential SetVariable() info leaks were detected')
+        f.visit_cnode_filterlist(_handle_get_set_variable, [CNodeExprCall])
 
     def run(self):
-        self.fix_SetVariable_prototype()
-        self.collect_GetSetVariable_calls()
-        self.process_GetVariable_calls()
-        self.process_SetVariable_calls()
+        for function in HxCFunc.iter_all():
+            self.validate_function(function)
+
+        if self.res:
+            self.logger.success('No functions that might disclose SMRAM contents were identified')
