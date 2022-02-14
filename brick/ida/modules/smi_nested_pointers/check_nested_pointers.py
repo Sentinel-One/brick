@@ -1,14 +1,13 @@
 from ...utils.functions_db.SmmIsBufferOutsideSmmValid import SmmIsBufferOutsideSmmValid
 from ..base_module import BaseModule
 from ..efiXplorer.efiXplorer import EfiXplorerModule
-from pathlib import Path
-from ...utils import brick_utils, bip_utils
+from ...utils import bip_utils
 
 from bip.base import *
 from bip.hexrays import *
 
 
-from .smi import CommBufferSmiHandler, LegacySwSmiHandler, SmiHandler
+from .smi import CommBufferSmiHandler
 
 
 class CheckNestedPointersModule(BaseModule):
@@ -45,7 +44,7 @@ class CheckNestedPointersModule(BaseModule):
 
         # Recursively scan calls made by the handler.
         if bip_utils.search_cnode_filterlist(handler.hxcfunc, _is_nested_pointer_validation, [CNodeExprCall], recursive=True):
-            self.logger.success(f'SMI {handler.name} seems to validate any pointers nested in the CommBuffer')
+            self.logger.success(f'SMI {handler.name} seems to validate pointers nested in the CommBuffer')
             return False
 
         # If we got here it means the CommBuffer seems to contain nested pointes, but we didn't
