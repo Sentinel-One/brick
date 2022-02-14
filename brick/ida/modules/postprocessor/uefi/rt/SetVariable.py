@@ -7,20 +7,20 @@ class SetVariableCall(CNodeExprIndirectCall):
 
     @property
     def VariableName(self):
-        pass
+        return self.get_arg(0)
 
     @property
     def VendorGuid(self):
-        pass
+        return self.get_arg(1)
 
     @property
     def Attributes(self):
-        pass
+        return self.get_arg(2)
 
     @property
     def DataSize(self):
-        pass
+        return self.get_arg(3)
 
     @property
     def Data(self):
-        pass
+        return self.get_arg(4)
