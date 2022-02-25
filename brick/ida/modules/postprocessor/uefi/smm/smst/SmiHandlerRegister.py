@@ -1,21 +1,15 @@
-from bip.base.bipelt import BipElt
-from ...base import CNodeExprIndirectCall, set_cnode_name, set_cnode_type
+from ...base import CNodeExprIndirectCall
+from .....efiXplorer.efiXplorer import EfiXplorerPlugin
 
+from bip.base import *
 from bip.hexrays import *
+
+import logging
 
 class SmiHandlerRegisterCall(CNodeExprIndirectCall):
     """Represents a call to SmiHandlerRegister()"""
 
     PROTOTYPE = 'EFI_SMM_INTERRUPT_REGISTER'
-
-    EFI_SMM_HANDLER_ENTRY_POINT2 = BipType.from_c("""EFI_STATUS (f)(
-        EFI_HANDLE DispatchHandle,
-        void * Context,
-        void * CommBuffer,
-        UINTN * CommBufferSize)""")
-
-    # Cb stands for Communication Buffer
-    COMM_BUFFER_SMI_PREFIX = 'CbSmiHandler'
 
     @property
     def Handler(self):

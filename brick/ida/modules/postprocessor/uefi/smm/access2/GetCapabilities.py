@@ -1,13 +1,16 @@
-from bip.base.biptype import BipType
-from ...base import CNodeExprIndirectCall, set_cnode_name, set_cnode_type
+from ...base import CNodeExprIndirectCall
 
 from bip.base import *
 from bip.hexrays import *
+
+import logging
 
 class GetCapabilitiesCall(CNodeExprIndirectCall):
     """"Represents a call to GetCapabilities()"""
     
     PROTOTYPE = 'EFI_SMM_CAPABILITIES2'
+
+    SMRAM_DESCRIPTOR_PREFIX = 'gSmramDescriptor_'
 
     @property
     def This(self):
@@ -28,10 +31,12 @@ class GetCapabilitiesCall(CNodeExprIndirectCall):
             smram_descriptor = smram_descriptor.ops[0].ignore_cast
         if not isinstance(smram_descriptor, CNodeExprObj):
             # if this is not a global object we ignore it
-            # print(f'smram descriptor is of type {type(smram_descriptor)}')
             return
-        # print(f'renaming at {smram_descriptor}')
         ea = smram_descriptor.value # get the address of the object
-        BipElt(ea).name = 'gSmramDescriptor_' + hex(ea)[2:]
 
-        set_cnode_type(smram_descriptor, BipType.from_c('EFI_SMRAM_DESCRIPTOR *'))
+        # Apply correct type
+        BipType.from_c('EFI_SMRAM_DESCRIPTOR *').set_at(ea)
+        # Rename to allow for easy reference in the future
+        BipElt(ea).name = f'{self.SMRAM_DESCRIPTOR_PREFIX}_{ea:x}'
+
+        logging.getLogger('brick').debug(f'Discovered an EFI_SMRAM_DESCRIPTOR at 0x{ea:x}')
