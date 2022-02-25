@@ -7,6 +7,10 @@ from ..postprocessor.uefi.rt.SetVariable import SetVariableCall
 from bip.base import *
 from bip.hexrays import *
 
+from ...utils import bip_utils
+import itertools
+from alleycat import AlleyCatCodePaths
+
 class SetVarInfoLeakModule(BaseModule):
     
     DEPENDS_ON = [PostprocessorModule, EfiXplorerModule]
@@ -36,47 +40,52 @@ class SetVarInfoLeakModule(BaseModule):
 
     def validate_function(self, f: HxCFunc):
 
-        # Variables that were encountered so far.
-        variables = set()
-
-        def _handle_get_set_variable(node: CNodeExprCall):
+        def _is_get_variable(node: CNodeExprCall):
             if any(f'->{x}' in node.cstr for x in ('GetVariable', 'SmmGetVariable')):
-                # Handle GetVariable
-                get_variable_call = GetVariableCall.from_cnode(node)
-                print(get_variable_call)
-                
-                variable_name = self._friendly_name(get_variable_call.VariableName)
-                variables.add(variable_name)
-                
-            elif any(f'->{x}' in node.cstr for x in ('SetVariable', 'SmmSetVariable')):
-                # Handle SetVariable
-                set_variable_call = SetVariableCall.from_cnode(node)
-                print(set_variable_call)
-                
-                variable_name = self._friendly_name(set_variable_call.VariableName)
-                if variable_name not in variables:
-                    # Variable was set without being retrieved first, benign case.
-                    return
-                
-                data_size = set_variable_call.DataSize
-                if not isinstance(data_size, CNodeExprNum):
-                    # DataSize is not a constant, benign case.
-                    return
+                return True
 
-                if data_size.value == 0:
-                    # DataSize = 0 is used to denote deleting a variable, benign case.
-                    return
+        # Collect all the calls to GetVariable()
+        get_variable_calls = bip_utils.collect_cnode_filterlist(f, _is_get_variable, [CNodeExprCall])
+        # Wrap them
+        get_variable_calls = [GetVariableCall.from_cnode(call) for call in get_variable_calls]
 
-                # If we got here, a variable that was already retrieved by the function is now
-                # being set using a hardcoded size, which might disclose sensitive data.
-                self.res = False
-                self.logger.error(f'Function {f.bfunc.name} discloses up to {data_size.value} SMRAM bytes while calling SetVariable() on {variable_name}')
-                
-            else:
-                # Nothing interesting
-                pass
+        def _is_set_variable(node: CNodeExprCall):
+            if any(f'->{x}' in node.cstr for x in ('SetVariable', 'SmmSetVariable')):
+                return True
 
-        f.visit_cnode_filterlist(_handle_get_set_variable, [CNodeExprCall])
+        # Collect all the calls to SetVariable()
+        set_variable_calls = bip_utils.collect_cnode_filterlist(f, _is_set_variable, [CNodeExprCall])
+        # Wrap
+        set_variable_calls = [SetVariableCall.from_cnode(call) for call in set_variable_calls]
+
+        # Generate cartesian product.
+        product = itertools.product(get_variable_calls, set_variable_calls)
+        
+        for (get_call, set_call) in product:
+            
+            # Check that there is path that connects both calls.
+            reachable = AlleyCatCodePaths(get_call.ea, set_call.ea).paths
+            if not reachable:
+                continue
+
+            # Check that both calls operate on the same variable.
+            variable_name = self._friendly_name(get_call.VariableName)
+            if self._friendly_name(set_call.VariableName) != variable_name:
+                continue
+
+            # DataSize must be a numeric constant.
+            data_size = set_call.DataSize
+            if not isinstance(data_size, CNodeExprNum):
+                continue
+
+            # DataSize = 0 is used to denote deleting a variable, benign case.
+            if data_size.value == 0:
+                continue
+
+            # If we got here, a variable that was already retrieved by the function is now
+            # being set using a hardcoded size, which might disclose sensitive data.
+            self.res = False
+            self.logger.error(f'Function {f.bfunc.name} discloses up to {data_size.value} SMRAM bytes while calling SetVariable() on {variable_name}')
 
     def run(self):
         for function in HxCFunc.iter_all():
