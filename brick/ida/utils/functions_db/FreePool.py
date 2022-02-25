@@ -9,7 +9,7 @@ class FreePool(FunctionMatcher):
     '''
 
     def __init__(self):
-        super().__init__('FreePool', is_library=True)
+        super().__init__('FreePool', is_library=True, decompiler_required=True)
 
     @staticmethod
     def heuristic(f: BipFunction):

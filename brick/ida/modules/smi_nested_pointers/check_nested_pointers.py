@@ -51,8 +51,8 @@ class CheckNestedPointersModule(BaseModule):
         # manage to find any call to a function that validates these pointers do not point to SMRAM.
         return True
 
-    def run(self):        
-        SmmIsBufferOutsideSmmValid().match(decompiler_required=True)
+    def run(self):
+        SmmIsBufferOutsideSmmValid().match()
         for handler in CommBufferSmiHandler.iter_all():
             if self._is_handler_vulnerable(handler):
                 self.logger.error(f'SMI Handler {handler} does not validate pointers in the Communication Buffer')

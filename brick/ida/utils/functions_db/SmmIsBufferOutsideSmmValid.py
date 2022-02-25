@@ -3,10 +3,12 @@ from bip.hexrays import *
 from .. import bip_utils
 from . import FunctionMatcher
 
+from ...modules.postprocessor.uefi.smm.access2.GetCapabilities import GetCapabilitiesCall
+
 class SmmIsBufferOutsideSmmValid(FunctionMatcher):
 
     def __init__(self):
-        super().__init__('SmmIsBufferOutsideSmmValid', is_library=True)
+        super().__init__('SmmIsBufferOutsideSmmValid', is_library=True, decompiler_required=True)
 
     @staticmethod
     def heuristic(f: BipFunction):
