@@ -21,8 +21,8 @@ class SmmIsBufferOutsideSmmValid(FunctionMatcher):
             return False
 
         # The function must reference at least one SMRAM descriptor.
-        for gSmramDescriptor in BipElt.get_by_prefix('gSmramDescriptor_'):
-            if f in gSmramDescriptor.xFuncTo:
+        for SmramDescriptor in BipElt.get_by_prefix(GetCapabilitiesCall.SMRAM_DESCRIPTOR_PREFIX):
+            if f in SmramDescriptor.xFuncTo:
                 break
         else:
             # No reference to SMRAM descriptor.
