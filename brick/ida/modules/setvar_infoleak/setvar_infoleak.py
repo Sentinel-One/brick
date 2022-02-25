@@ -15,6 +15,8 @@ class SetVarInfoLeakModule(BaseModule):
     
     DEPENDS_ON = [PostprocessorModule, EfiXplorerModule]
 
+    EFI_VARIABLE_RUNTIME_ACCESS = 0x0000000000000004
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -81,6 +83,14 @@ class SetVarInfoLeakModule(BaseModule):
             # DataSize = 0 is used to denote deleting a variable, benign case.
             if data_size.value == 0:
                 continue
+
+            # If possible, check that the variable has a runtime attribute.
+            attrs = set_call.Attributes
+            if isinstance(attrs, CNodeExprNum):
+                if attrs.value & self.EFI_VARIABLE_RUNTIME_ACCESS == 0:
+                    continue
+                 
+            # @TODO: Check that the same buffer is used in both calls?
 
             # If we got here, a variable that was already retrieved by the function is now
             # being set using a hardcoded size, which might disclose sensitive data.
