@@ -13,15 +13,6 @@ class PreprocessorModule(BaseModule):
 
     DEPENDS_ON = []
 
-    UEFI_C_MACROS = {
-        'EFIAPI': '__stdcall',
-        'IN': '',
-        'OUT': '',
-        'OPTIONAL': '',
-        'CONST': 'const',
-        'PACKED': '',
-    }
-
     def __init__(self) -> None:
         super().__init__()
         self.include_dir = Path(__file__).parent / 'include'
@@ -61,14 +52,24 @@ class PreprocessorModule(BaseModule):
                     idc.del_func(f.ea)
                     BipFunction.create(new_ea)
 
-    def define_uefi_macros(self):
+    def _define_uefi_macros(self):
+
+        UEFI_C_MACROS = {
+            'EFIAPI': '__stdcall',
+            'IN': '',
+            'OUT': '',
+            'OPTIONAL': '',
+            'CONST': 'const',
+            'PACKED': '',
+        }
+
         macros = ida_typeinf.get_c_macros()
-        for key, value in self.UEFI_C_MACROS.items():
+        for key, value in UEFI_C_MACROS.items():
             macros += f'{key}={value};'
         ida_typeinf.set_c_macros(macros)
 
-    def load_protocol_definitions(self):
-        self.define_uefi_macros()
+    def _load_protocol_definitions(self):
+        self._define_uefi_macros()
 
         # Custom includes
         for header in self.include_dir.iterdir():
@@ -92,4 +93,4 @@ class PreprocessorModule(BaseModule):
         self._set_text_section_rwx()
         # Find functions that the initial auto-analysis might have missed.
         self._find_missing_functions()
-        self.load_protocol_definitions()
+        self._load_protocol_definitions()
