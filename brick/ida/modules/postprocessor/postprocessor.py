@@ -1,6 +1,6 @@
 from bip.base import *
 from bip.hexrays import *
-from brick.ida.modules.efiXplorer.efiXplorer import EfiXplorerModule, EfiXplorerPlugin
+from ...modules.efiXplorer.efiXplorer import EfiXplorerModule, EfiXplorerPlugin
 
 from ..base_module import BaseModule
 
