@@ -6,7 +6,7 @@ from bip.hexrays import *
 from ..efiXplorer.efiXplorer import EfiXplorerModule
 from ..smi_nested_pointers.smi import CommBufferSmiHandler
 
-class SmramOverlapModule(BaseModule):
+class LowSmramCorruptionModule(BaseModule):
     '''
     Scans for SMI handlers that don't properly validate the size of the communication buffer.
     Malicious actors can place the communication buffer just below the SMRAM range,
