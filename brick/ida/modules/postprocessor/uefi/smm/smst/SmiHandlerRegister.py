@@ -24,14 +24,24 @@ class SmiHandlerRegisterCall(CNodeExprIndirectCall):
         return self.get_arg(2)
 
     def process(self):
-        pass
-    
-        # handler = self.Handler.ignore_cast
-        # if not isinstance(handler, CNodeExprObj):
-        #     # unexpected
-        #     return
+        EFI_SMM_HANDLER_ENTRY_POINT2 = BipType.from_c("""EFI_STATUS (f)(
+            EFI_HANDLE DispatchHandle,
+            void * Context,
+            void * CommBuffer,
+            UINTN * CommBufferSize)""")
 
-        # ea = hex(handler.value)[2:]
-        # BipElt(handler.value).name = f'{self.COMM_BUFFER_SMI_PREFIX}_{ea}'
+        handler = self.Handler.ignore_cast
+        if not isinstance(handler, CNodeExprObj):
+            # Unexpected
+            return
 
-        # self.EFI_SMM_HANDLER_ENTRY_POINT2.set_at(handler.value)
+        if BipElt(handler.value).name.startswith(EfiXplorerPlugin.CB_SMI_PREFIX):
+            # SMI handler that is already identified.
+            return
+
+        # SMI handler that efiXplorer missed.
+        BipElt(handler.value).name = f'{EfiXplorerPlugin.CB_SMI_PREFIX}_{handler.value:x}'
+        EFI_SMM_HANDLER_ENTRY_POINT2.set_at(handler.value)
+
+        logging.getLogger('brick').debug(f'Discovered an SMI handler at 0x{handler.value:x}')
+        
