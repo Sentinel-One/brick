@@ -20,10 +20,6 @@
 #define AMI_SMM_BUFFER_VALIDATION_PROTOCOL_GUID \
 	{ 0xda473d7f, 0x4b31, 0x4d63, { 0x92, 0xb7, 0x3d, 0x90, 0x5e, 0xf8, 0x4b, 0x84 } }
 
-#define EFIAPI __stdcall
-#define CONST const
-#define VOID void
-
 /**
     Validates memory buffer.
     
