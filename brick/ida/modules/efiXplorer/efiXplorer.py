@@ -64,7 +64,7 @@ class EfiXplorerPlugin:
             json_report_path = Path(self.input_file + '.json')
 
         if not json_report_path.exists():
-            raise EfiXplorerError('Could not find efiXplorer results file')
+            raise EfiXplorerError(f'Could not find efiXplorer results file for {self.input_file}')
 
         with open(json_report_path, 'r') as f:
             return json.load(f)
