@@ -25,13 +25,16 @@ def update_progress_bar(max_value: int):
         listener.accept()
         bar.update(bar.value + 1)
 
-def analyze(rom, outdir, modules, verbose=False, quick=False):
+def analyze(rom, outdir, modules, verbose=False, quick=False, extract_only=False):
     with log_step('Building GUIDs database'):
         db = GuidsDatabase()
     
     with log_step('Harvesting SMM modules'):
         filter = harvest.filters.skip_edk2_filter if quick else None
         do_harvest(rom, outdir, db.guid2name, filter)
+
+    if extract_only:
+        return
 
     # 64-bit binaries with .efi extension
     hunter = Hunter(outdir, 64, '.efi', verbose)
@@ -64,6 +67,7 @@ def main():
     parser.add_argument('rom', help='Path to firmware image to analyze')
     parser.add_argument('-o', '--outdir', help='Path to output directory')
     parser.add_argument('-v', '--verbose', action='store_true', help='Use more verbose traces')
+    parser.add_argument('-e', '--extract', action='store_true', help='Just extract SMM images, do not analyze')
     parser.add_argument('-q', '--quick', action='store_true', help='Skip EDK2 binaries')
 
     modules_group = parser.add_mutually_exclusive_group()
@@ -78,9 +82,10 @@ def main():
         args.outdir = f'{args.rom}.output'
 
     with log_timing(f'Analyzing {args.rom}'):
-        report = analyze(args.rom, args.outdir, args.modules, args.verbose, args.quick)
+        report = analyze(args.rom, args.outdir, args.modules, args.verbose, args.quick, args.extract)
 
-    log_operation(f'Check the resulting report file at {report}')
+    if report is not None:
+        log_operation(f'Check the resulting report file at {report}')
 
 if __name__ == '__main__':
     main()
