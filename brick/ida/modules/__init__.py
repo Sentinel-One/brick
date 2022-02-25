@@ -3,8 +3,8 @@ BRICK_FULL_RUN_MODULES = (
     'efiXplorer',
     'postprocessor',
     'callouts',
-    'smm_buffer',
-    'smram_overlap',
+    'smi_nested_pointers',
+    'low_smram_corruption',
     'toctou',
     'legacy_protocols',
     'is_edk2',
@@ -17,7 +17,7 @@ BRICK_QUICK_RUN_MODULES = (
     'preprocessor',
     'efiXplorer',
     'postprocessor',
-    'smm_buffer',
+    'smi_nested_pointers',
     'toctou',
     'setvar_infoleak',
 )
@@ -27,7 +27,7 @@ BRICK_MODULES_DESCRIPTIONS = {
     'efiXplorer': 'Analyzing a SMM binary with efiXplorer',
     'postprocessor': 'Post-processing',
     'callouts': 'Detects SMM callouts',
-    'smm_buffer': 'Scanning for SMI handlers not calling SmmIsBufferOutsideSmmValid() or equivalent on the CommBuffer',
+    'smi_nested_pointers': 'Scanning for SMI handlers not calling SmmIsBufferOutsideSmmValid() or equivalent on the CommBuffer',
     'toctou': 'Scanning for SMI handlers that are subject to a TOCTOU attack',
     'legacy_protocols': 'Scanning for SMM modules which use legacy or deprecated protocols',
     'is_edk2': 'Checking whether or not the SMM binary comes from a reference implementation such as EDK2',
@@ -51,8 +51,8 @@ if in_ida:
     from .cseg.scan_cseg import CsegOnlyModule
     from .legacy_protocols.legacy_protocols import LegacyProtocolsModule
     from .reference_code.is_edk2 import IsEdk2Module
-    from .smi_nested_pointers.check_nested_pointers import CheckNestedPointersModule
-    from .smi_smram_overlap.smram_overlap import SmramOverlapModule
+    from .smi_nested_pointers.smi_nested_pointers import SmiNestedPointersModule
+    from .low_smram_corruption.low_smram_corruption import LowSmramCorruptionModule
     from .toctou.toctou import ToctouModule
     from .setvar_infoleak.setvar_infoleak import SetVarInfoLeakModule
 
@@ -61,8 +61,8 @@ if in_ida:
         'efiXplorer': EfiXplorerModule,
         'postprocessor': PostprocessorModule,
         'callouts': SmmCalloutsModule,
-        'smm_buffer': CheckNestedPointersModule,
-        'smram_overlap': SmramOverlapModule,
+        'smi_nested_pointers': SmiNestedPointersModule,
+        'low_smram_corruption': LowSmramCorruptionModule,
         'toctou': ToctouModule,
         'legacy_protocols': LegacyProtocolsModule,
         'is_edk2': IsEdk2Module,
