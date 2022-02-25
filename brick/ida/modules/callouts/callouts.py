@@ -45,7 +45,7 @@ class SmmCalloutsModule(BaseModule):
         '''
         Initializes a database of functions that are known for generating false positives in efiXplorer.
         '''
-        if (FreePool_ea := FreePool().match(decompiler_required=True)):
+        if (FreePool_ea := FreePool().match()):
             self.known_false_positives.add(FreePool_ea)
 
     def _find_next_call(self, ea, limit=10):
