@@ -1,5 +1,6 @@
 import pathlib
 import argparse
+import os
 
 from progressbar.bar import ProgressBar
 from guids.guids_db import GuidsDatabase
@@ -13,6 +14,7 @@ import threading
 import harvest.filters
 from multiprocessing.connection import Listener
 from shared import NOTIFICATION_ADDRESS
+from brick_api import scan_directory
 
 def update_progress_bar(max_value: int):
     
@@ -36,23 +38,12 @@ def analyze(rom, outdir, modules, verbose=False, quick=False, extract_only=False
     if extract_only:
         return
 
-    # 64-bit binaries with .efi extension
-    hunter = Hunter(outdir, 64, '.efi', verbose)
-
-    with log_step('Analyzing SMM modules'):
-        hunter.analyze()
-
-    with log_step('Cleaning-up temporary files'):
-        hunter.cleanup()
-
-    bootstrap_script = pathlib.Path(__file__).parent / 'brick_ida.py'
-
-    import glob
-    max_value = len(glob.glob(f"{outdir}\\*.efi"))
+    max_value = len(os.listdir(outdir))
     # Start a background thread to update the progess bar when 
     threading.Thread(target=update_progress_bar, args=(max_value, ), daemon=True).start()
 
-    hunter.run_script(bootstrap_script)
+    with log_step('Scanning for SMM vulnerabilities'):
+        scan_directory(outdir)
 
     # Merge all individual output files into one report file, formatted as HTML.
     html_report = f'{rom}.html'
