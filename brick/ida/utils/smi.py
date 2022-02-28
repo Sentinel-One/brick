@@ -1,9 +1,9 @@
 from functools import cached_property
-from ...utils.type_reconstructor import TypeReconstructor, HexRaysCodeXplorerError
+from .type_reconstructor import TypeReconstructor, HexRaysCodeXplorerError
 from bip.base import *
 from bip.hexrays import *
 
-from ...utils import brick_utils, bip_utils
+from . import brick_utils, bip_utils
 import re
 
 class SmiHandler(BipFunction):
@@ -144,7 +144,6 @@ class CommBufferSmiHandler(SmiHandler):
         comm_buffer_arg.type = BipType.from_c('UINTN')
         self.hxcfunc.invalidate_cache()
 
-        # print('Set comm buffer type to UINTN')
         comm_buffer_struct_name = f'CommBuffer_{self.hex_ea}'
 
         try:

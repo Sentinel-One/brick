@@ -3,12 +3,10 @@ from ..base_module import BaseModule
 from ..efiXplorer.efiXplorer import EfiXplorerModule
 from ..postprocessor.postprocessor import PostprocessorModule
 from ...utils import bip_utils
+from ...utils.smi import CommBufferSmiHandler
 
 from bip.base import *
 from bip.hexrays import *
-
-
-from .smi import CommBufferSmiHandler
 
 
 class SmiNestedPointersModule(BaseModule):

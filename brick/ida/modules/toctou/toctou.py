@@ -5,7 +5,7 @@ from bip.base import *
 from bip.hexrays import *
 from alleycat import AlleyCatCodePaths
 
-from ..smi_nested_pointers.smi import CommBufferSmiHandler
+from ...utils.smi import CommBufferSmiHandler
 from ..efiXplorer.efiXplorer import EfiXplorerModule
 
 class ToctouModule(BaseModule):

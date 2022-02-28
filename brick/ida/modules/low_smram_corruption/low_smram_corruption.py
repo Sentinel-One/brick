@@ -4,7 +4,7 @@ from bip.base import *
 from bip.hexrays import *
 
 from ..efiXplorer.efiXplorer import EfiXplorerModule
-from ..smi_nested_pointers.smi import CommBufferSmiHandler
+from ...utils.smi import CommBufferSmiHandler
 
 class LowSmramCorruptionModule(BaseModule):
     '''
