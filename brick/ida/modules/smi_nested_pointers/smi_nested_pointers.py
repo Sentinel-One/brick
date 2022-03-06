@@ -16,40 +16,67 @@ class SmiNestedPointersModule(BaseModule):
 
     DEPENDS_ON = [PostprocessorModule, EfiXplorerModule]
 
+    def _is_shallow_pointer_validation(self, handler: CommBufferSmiHandler, field_name: str):
+        '''
+        If we are lucky enough, the handler calls the validation function directly on the nested pointer.
+        '''
+        def __validation_callback(node: CNodeExprCall):
+            if 'SmmIsBufferOutsideSmmValid' in node.cstr or '->ValidateMemoryBuffer' in node.cstr:
+                buffer = node.args[0].ignore_cast
+                
+                if isinstance(buffer, CNodeExprMemptr) and buffer.cstr == f'CommBuffer->{field_name}':
+                    # Interrupt the search.
+                    return True
+
+        return bip_utils.search_cnode_filterlist(handler.hxcfunc, __validation_callback, [CNodeExprCall])
+
+    def _is_deep_pointer_validation(self, handler: CommBufferSmiHandler):
+        '''
+        Our data-flow analysis is pretty limited at the moment.
+        '''
+        def __validation_callback(node: CNodeExprCall):
+            if 'SmmIsBufferOutsideSmmValid' in node.cstr or '->ValidateMemoryBuffer' in node.cstr:
+                buffer = node.args[0].ignore_cast
+                if isinstance(buffer, CNodeExprVar) and buffer.lvar != handler.CommBuffer:
+                    # Found a validation of a local variable which is not the CommBuffer itself.
+                    return True
+
+        return bip_utils.search_cnode_filterlist(handler.hxcfunc, __validation_callback, [CNodeExprCall], recursive=True)
+
     def _is_handler_vulnerable(self, handler: CommBufferSmiHandler):
         if not handler.CommBuffer._lvar.used:
             # The CommBuffer is not used, so the handler is implicitly safe.
             self.logger.success(f'SMI {handler.name} considered safe: does not reference CommBuffer')
             return False
 
-        # Check if the Comm Buffer holds any nested pointers
+        # Reconstruct the structure of CommBuffer.
         comm_buffer_type = handler.reconstruct_comm_buffer()
-        if not any(isinstance(member, BTypePtr) for member in comm_buffer_type.children[0].children):
+        if not isinstance(comm_buffer_type, BTypePtr) or not isinstance(comm_buffer_type.children[0], BTypeStruct):
+            return
+
+        # Check if the Comm Buffer holds any nested pointers
+        members_info = comm_buffer_type.children[0].members_info.items()
+        nested_pointers = [field_name for field_name, field_type in members_info if isinstance(field_type, BTypePtr)]
+        if not nested_pointers:
             self.logger.success(f'SMI {handler.name} considerd safe: CommBuffer does not contain nested pointers')
             return False
 
-        def _is_nested_pointer_validation(node: CNodeExprCall):
-            '''A callback function that inspects call statements.
-            '''
-            if 'SmmIsBufferOutsideSmmValid' in node.cstr or '->ValidateMemoryBuffer' in node.cstr:
-                buffer = node.args[0].ignore_cast
-                
-                if isinstance(buffer, CNodeExprVar) and buffer.lvar == handler.CommBuffer:
-                    # Called on the CommBuffer itself. This has no meaning for us.
-                    return False
+        for ptr in nested_pointers[:]: # Operate on a copy
+            if self._is_shallow_pointer_validation(handler, ptr):
+                self.logger.success(f'SMI {handler}: nested pointer {ptr} is being sanitized')
+                nested_pointers.remove(ptr)
 
-                # Called on something other than the CommBuffer.
-                # @TODO: Think how to validate this is indeed a nested pointer.
-                return True
-
-        # Recursively scan calls made by the handler.
-        if bip_utils.search_cnode_filterlist(handler.hxcfunc, _is_nested_pointer_validation, [CNodeExprCall], recursive=True):
-            self.logger.success(f'SMI {handler.name} seems to validate pointers nested in the CommBuffer')
+        if not nested_pointers:
+            # No nested pointers were left unverified.
             return False
 
-        # If we got here it means the CommBuffer seems to contain nested pointes, but we didn't
-        # manage to find any call to a function that validates these pointers do not point to SMRAM.
-        return True
+        if not self._is_deep_pointer_validation(handler):
+            # No additional validation calls were found, which necessarily means some nested pointers are not validated.
+            self.logger.error(f'SMI {handler}: missing validation of nested pointers {nested_pointers}')
+        else:
+            # Additional validation calls were found, but we can't be sure it's validating the nested pointers.
+            # Issue a warning for that.
+            self.logger.warning((f'SMI {handler}: cannot deduce validation status of {nested_pointers}'))
 
     def run(self):
         if sibosv := SmmIsBufferOutsideSmmValid().match():
