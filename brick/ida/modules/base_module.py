@@ -1,6 +1,5 @@
-from contextlib import contextmanager
 import logging
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 import idaapi
 
 class BaseModule(ABC):
