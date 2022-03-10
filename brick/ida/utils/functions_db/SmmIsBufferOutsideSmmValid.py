@@ -1,7 +1,5 @@
 from bip.base import *
 from bip.hexrays import *
-from brick.ida.modules.postprocessor.uefi.smm import access2
-from .. import bip_utils
 from . import FunctionMatcher
 
 from ...modules.postprocessor.uefi.smm.access2.GetCapabilities import GetCapabilitiesCall
