@@ -77,6 +77,15 @@ class EfiXplorerModule(BaseModule):
 
     DEPENDS_ON = [PreprocessorModule]
 
-    def run(self):        
+    def run(self):
         efiXplorer = EfiXplorerPlugin(self.input_file, self.is_64bit)
         efiXplorer.run(EfiXplorerPlugin.Args.DISABLE_UI)
+        
+        # Report vulnerabilities.
+        results = efiXplorer.get_results()
+        for (bugtype, instances) in results.get('vulns', {}).items():
+            if bugtype == 'smm_callout':
+                # We have a dedicated module for callout vulnerabilities.
+                continue
+            instances = [f'0x{i:x}' for i in instances]
+            self.logger.error(f'efiXplorer detected {bugtype} at {instances}')
