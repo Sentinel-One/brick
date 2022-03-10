@@ -24,7 +24,7 @@ class LowSmramCorruptionModule(BaseModule):
             # CommBufferSize is not touched at all.
             return False
 
-        def _derefs_CommBufferSize(node: CNodeExprPtr):
+        def inspect_deref(node: CNodeExprPtr):
             '''Does the node correspond to a dereference operation on CommBufferSize? (i.e. *CommBufferSize)'''
             dereferenced = node.ops[0].ignore_cast
 
@@ -33,7 +33,7 @@ class LowSmramCorruptionModule(BaseModule):
                 return False
 
         # If the search was interrupted, it means we found a node that dereferences CommBufferSize.
-        interrupted = not handler.hxcfunc.visit_cnode_filterlist(_derefs_CommBufferSize, [CNodeExprPtr])
+        interrupted = not handler.hxcfunc.visit_cnode_filterlist(inspect_deref, [CNodeExprPtr])
         return interrupted
 
     @staticmethod
