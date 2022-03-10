@@ -91,7 +91,7 @@ def take_snapshot(desc):
     snapshot.desc = desc
     idaapi.take_database_snapshot(snapshot)
 
-def signal_module_completion():
+def signal_completion():
     try:
         # Make a connection to signal the analysis is complete.
         conn = Client(NOTIFICATION_ADDRESS)
@@ -155,7 +155,7 @@ if __name__ == '__main__':
                     logger.error(tb)
 
         if not is_interactive:
-            signal_module_completion()
+            signal_completion()
 
     # It is counter intuitive, but the IDA batch mode will pop the UI after executing the script by
     # default, so this allows us to cleanly exit IDA and avoid the UI to pop-up upon completion
