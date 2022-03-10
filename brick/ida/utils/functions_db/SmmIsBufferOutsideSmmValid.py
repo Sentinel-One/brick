@@ -32,7 +32,7 @@ class SmmIsBufferOutsideSmmValid(FunctionMatcher):
                 return False
 
         # Visit all the return statements in the function.
-        return not f.hxcfunc.visit_cnode_filterlist(inspect_return, [CNodeStmtReturn])
+        return f.hxcfunc.visit_cnode_filterlist(inspect_return, [CNodeStmtReturn])
 
     @staticmethod
     def references_smram_descriptor(f: BipFunction):
