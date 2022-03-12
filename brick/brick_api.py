@@ -11,14 +11,13 @@ def scan_file(filename, *modules) -> int:
     basename = str(abspath.stem)
     extension = abspath.suffix
 
-    smm_pe = pefile.PE(abspath)
-    match smm_pe.FILE_HEADER.Machine:
-        case pefile.MACHINE_TYPE.get('IMAGE_FILE_MACHINE_AMD64'):
-            bitness = 64
-        case pefile.MACHINE_TYPE.get('IMAGE_FILE_MACHINE_I386'):
-            bitness = 32
-        case _:
-            raise ValueError(f'Unsupported machine type 0x{smm_pe.FILE_HEADER.Machine:x}')
+    machine = pefile.PE(abspath).FILE_HEADER.Machine
+    if machine == pefile.MACHINE_TYPE['IMAGE_FILE_MACHINE_AMD64']:
+        bitness = 64
+    elif machine == pefile.MACHINE_TYPE['IMAGE_FILE_MACHINE_I386']:
+        bitness = 32
+    else:
+        raise ValueError(f'Unsupported machine type 0x{machine:x}')
 
     hunter = Hunter(dirname, bitness, extension, basename)
     hunter.analyze()
