@@ -9,6 +9,7 @@ from .uefi.rt import EfiRuntimeServices
 from .uefi.smm.cpu import SmmCpuCallsFactory
 from .uefi.smm.access2 import SmmAccess2Protocol
 from .uefi.smm.smst import SmstFactory
+from .uefi.smm.ami import AmiSmmBufferValidationFactory
 
 from ...utils import bip_utils
 
@@ -33,6 +34,7 @@ class PostprocessorModule(BaseModule):
         EfiRuntimeServices.process_calls()
         SmmCpuCallsFactory.process_calls()
         SmmAccess2Protocol.process_calls()
+        AmiSmmBufferValidationFactory.process_calls()
 
     def _rename_enums(self):
         idc.import_type(-1, 'MACRO_EFI')
