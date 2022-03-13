@@ -61,6 +61,7 @@ class PreprocessorModule(BaseModule):
             'OPTIONAL': '',
             'CONST': 'const',
             'PACKED': '',
+            'VOID': 'void',
         }
 
         macros = ida_typeinf.get_c_macros()
