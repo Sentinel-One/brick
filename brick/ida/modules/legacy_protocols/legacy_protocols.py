@@ -30,7 +30,7 @@ class LegacyProtocolsModule(BaseModule):
             if found:
                 # Report that a legacy GUID was found.
                 self.res = False
-                self.logger.warning(f'Found legacy protocol {name} {guid} at 0x{found.ea:x}')
+                self.logger.debug(f'Found legacy protocol {name} {guid} at 0x{found.ea:x}')
 
         if self.res:
             self.logger.success('No legacy protocols were found')
