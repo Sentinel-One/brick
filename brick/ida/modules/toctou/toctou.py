@@ -16,6 +16,38 @@ class ToctouModule(BaseModule):
 
     DEPENDS_ON = [EfiXplorerModule]
 
+    def _is_memref(self, node: CNodeExprMemptr):
+        '''
+        The decompiler may propagate expressions to make the output more readable and reduce the
+        number of artificial variables, which might lead to somewhat misleading output.
+        For example, for the following snippet:
+            mov     rcx, [r8]       ; r8 = CommBuffer
+            mov     cs:qword_37B0, rcx
+        The decompiler might generate the following pseudocode:
+            v5 = *CommBuffer;
+            qword_37B0 = *CommBuffer;
+
+        While the pseudocode is logically correct, it creates the illusion the CommBuffer
+        in memory was accessed twice, where in reality it was only accessed once.
+        To workaround this issue, we will disassemble the instruction corresponding to the dereference
+        opearion and check if makes any references to memory.
+        '''
+
+        try:
+            ins = BipInstr(node.closest_ea)
+            if ins.mnem in ('mov', 'movzx'):
+                src = ins.ops[1]
+            elif ins.mnem in ('cmp', 'test'):
+                src = ins.ops[0]
+            else:
+                self.logger.debug(f'0x{node.closest_ea:x}: unexcepted opcode {ins.str}')
+                return False
+
+            return src.is_memref
+        except:
+            self.logger.debug(f'Exception at {node.cstr} {node.ea}')
+            return False
+
     def _validate_handler(self, handler: HxCFunc):
 
         # Reconstruct the strucutre for the CommBuffer.
@@ -35,10 +67,20 @@ class ToctouModule(BaseModule):
             if not match:
                 return
 
-            # Check it is not used as the left-hand side of an assignment.
             if node.has_parent:
+                # Check it is not used as the left-hand side of an assignment.
                 if isinstance(node.parent, CNodeExprAssignment) and node.parent.dst == node:
                     return
+                if isinstance(node.parent, CNodeExprRef):
+                    # The expression merely takes the address of a field (e.g. &CommBuffer->field_0)
+                    return
+
+            # Check the disassembly to see it's indeed a fetch from memory.
+            if not self._is_memref(node):
+                # self.logger.debug(f'Node {node.cstr} at 0x{node.ea:x} does not fetch from memory')
+                return
+            # else:
+            #     self.logger.debug(f'Node {node.cstr} at 0x{node.ea:x} is a fetch from memory')
 
             # Append the address of the node to the list of references to the field.
             field_name = match.groups()[0]
