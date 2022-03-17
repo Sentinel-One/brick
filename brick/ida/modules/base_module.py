@@ -1,6 +1,8 @@
+import os
 import logging
 from abc import ABC, abstractmethod
 import idaapi
+from ..utils.watchdog import Watchdog
 
 class BaseModule(ABC):
 
@@ -17,3 +19,13 @@ class BaseModule(ABC):
     def run(self):
         # Should be overriden by subclasses.
         pass
+
+    def timed_run(self, timeout):
+        def self_terminate():
+            self.logger.fatal(f'Timeout executing module {self.__class__.__name__}')
+            # Forcefully kill the process.
+            os.kill(os.getpid(), 0)
+
+        with Watchdog(timeout, self_terminate):
+            self.run()
+

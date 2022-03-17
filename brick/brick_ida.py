@@ -144,7 +144,7 @@ if __name__ == '__main__':
             try:
                 mod_obj = mod_cls()
                 # take_snapshot(f'Before {module}')
-                mod_obj.run()
+                mod_obj.timed_run(5 * 60) # No module should take more than 5 minutes.
                 # take_snapshot(f'After {module}')
             except Exception as e:
                 tb = traceback.format_tb((sys.exc_info()[2]))

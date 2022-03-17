@@ -19,6 +19,7 @@ def format(outdir, outfile, clean=False):
             continue
         
     COLORS = {
+        'FATAL': 'gray',
         'ERROR': 'red',
         'WARNING': 'orange',
         'SUCCESS': 'green',
