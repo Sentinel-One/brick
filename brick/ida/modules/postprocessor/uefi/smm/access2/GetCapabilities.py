@@ -39,4 +39,4 @@ class GetCapabilitiesCall(CNodeExprIndirectCall):
         # Rename to allow for easy reference in the future
         BipElt(ea).name = f'{self.SMRAM_DESCRIPTOR_PREFIX}_{ea:x}'
 
-        logging.getLogger('brick').debug(f'Discovered an EFI_SMRAM_DESCRIPTOR at 0x{ea:x}')
+        logging.getLogger('brick').info(f'Discovered an EFI_SMRAM_DESCRIPTOR at 0x{ea:x}')

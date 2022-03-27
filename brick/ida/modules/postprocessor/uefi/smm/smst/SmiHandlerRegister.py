@@ -43,5 +43,5 @@ class SmiHandlerRegisterCall(CNodeExprIndirectCall):
         BipElt(handler.value).name = f'{EfiXplorerPlugin.CB_SMI_PREFIX}_{handler.value:x}'
         EFI_SMM_HANDLER_ENTRY_POINT2.set_at(handler.value)
 
-        logging.getLogger('brick').debug(f'Discovered an SMI handler at 0x{handler.value:x}')
+        logging.getLogger('brick').info(f'Discovered an SMI handler at 0x{handler.value:x}')
         
