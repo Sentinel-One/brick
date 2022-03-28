@@ -2,9 +2,11 @@ from functools import cached_property
 from .type_reconstructor import TypeReconstructor, HexRaysCodeXplorerError
 from bip.base import *
 from bip.hexrays import *
+from ..modules.efiXplorer.efiXplorer import EfiXplorerPlugin
 
 from . import brick_utils, bip_utils
 import re
+
 
 class SmiHandler(BipFunction):
     
@@ -102,7 +104,7 @@ class LegacySwSmiHandler(SmiHandler):
     Represents a legacy software SMI handler that is registered via the EfiSmmSwDispatch(2)Protocol.
     '''
 
-    PREFIX = 'SwSmiHandler'
+    PREFIX = EfiXplorerPlugin.SW_SMI_PREFIX
 
     @classmethod
     def iter_all(cls):
@@ -116,7 +118,7 @@ class CommBufferSmiHandler(SmiHandler):
     Represent an SMI handler that receives its arguments via the Communication Buffer.
     '''
 
-    PREFIX = 'SmiHandler'
+    PREFIX = EfiXplorerPlugin.CB_SMI_PREFIX
 
     def __init__(self, ea):
         super().__init__(ea)
