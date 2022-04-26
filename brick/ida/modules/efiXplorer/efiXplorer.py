@@ -20,7 +20,9 @@ class EfiXplorerPlugin:
     # Prefix for legacy software SMIs.
     SW_SMI_PREFIX = 'SwSmiHandler'
     # Prefix for CommBuffer based SMIs.
-    CB_SMI_PREFIX = 'SmiHandler'
+    CB_SMI_PREFIX = 'ChildSmiHandler'
+    # Prefix for any unrecognized protocol GUID.
+    PROPRIETARY_PROTOCOL_PREFIX = 'ProprietaryProtocol'
 
     class Args(IntEnum):
         '''
