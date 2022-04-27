@@ -2,8 +2,11 @@
 #define _BRICK_TYPEDEFS_H_
 
 #include "AmiFlash.h"
+#include "AmiDebugService.h"
+#include "AmiNvramUpdate.h"
 
-typedef struct _AMI_FLASH_PROTOCOL AMI_SMM_FLASH_PROTOCOL;
+typedef AMI_FLASH_PROTOCOL AMI_SMM_FLASH_PROTOCOL;
 typedef AMI_DEBUG_SERVICE_PROTOCOL AMI_SMM_DEBUG_SERVICE_PROTOCOL;
+typedef AMI_NVRAM_UPDATE_PROTOCOL AMI_SMM_NVRAM_UPDATE_PROTOCOL;
 
 #endif
