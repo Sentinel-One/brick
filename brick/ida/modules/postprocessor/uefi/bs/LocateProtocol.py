@@ -59,7 +59,7 @@ class LocateProtocolCall(CNodeExprIndirectCall):
             # Protocol is a global variable.
             protocol_guid = protocol_var.value_as_elt
             return     protocol_guid.is_user_name and \
-                   not protocol_guid.name.startswith(EfiXplorerPlugin.ROPRIETARY_PROTOCOL_PREFIX)
+                   not protocol_guid.name.startswith(EfiXplorerPlugin.PROPRIETARY_PROTOCOL_PREFIX)
         else:
             # Unexpected.
             raise TypeError(f'Protocol variable is expected to be either a local or global variable, got {protocol_var} instead')
