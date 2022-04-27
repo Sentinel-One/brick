@@ -1,5 +1,5 @@
 from ..base import CNodeExprIndirectCall
-from brick.ida.modules.efiXplorer.efiXplorer import EfiXplorerPlugin
+from .....modules.efiXplorer.efiXplorer import EfiXplorerPlugin
 
 from bip.base import *
 from bip.hexrays import *
