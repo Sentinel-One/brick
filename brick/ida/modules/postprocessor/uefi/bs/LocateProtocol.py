@@ -92,7 +92,7 @@ class LocateProtocolCall(CNodeExprIndirectCall):
         interface_var = self.interface_var
         if isinstance(interface_var, CNodeExprVar):
             # Interface is a local variable.
-            return interface_var.lvar.has_user_name
+            return not interface_var.lvar.type.is_pvoid
         elif isinstance(interface_var, CNodeExprObj):
             # Protocol is a global variable.
             return interface_var.value_as_elt.is_user_name
