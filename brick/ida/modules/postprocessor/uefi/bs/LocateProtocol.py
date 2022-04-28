@@ -92,10 +92,12 @@ class LocateProtocolCall(CNodeExprIndirectCall):
         interface_var = self.interface_var
         if isinstance(interface_var, CNodeExprVar):
             # Interface is a local variable.
-            return not interface_var.lvar.type.is_pvoid
+            interface_type = interface_var.lvar.type
+            return isinstance(interface_type, BTypePtr) and not interface_type.is_pvoid
         elif isinstance(interface_var, CNodeExprObj):
             # Protocol is a global variable.
-            return interface_var.value_as_elt.is_user_name
+            interface_type = interface_var.value_as_elt.type
+            return isinstance(interface_type, BTypePtr) and not interface_type.is_pvoid
         else:
             # Unexpected.
             raise TypeError(f'Interface argument is expected to be either a local or global variable, got {interface_var} instead')
