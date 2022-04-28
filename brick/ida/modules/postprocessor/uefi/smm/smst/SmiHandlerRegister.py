@@ -35,14 +35,15 @@ class SmiHandlerRegisterCall(CNodeExprIndirectCall):
             # Unexpected
             return
 
+        # Force the type of the handler.
+        EFI_SMM_HANDLER_ENTRY_POINT2.set_at(handler.value)
+
         if BipElt(handler.value).name.startswith(EfiXplorerPlugin.CB_SMI_PREFIX):
             # SMI handler that is already identified.
             return
 
         # SMI handler that efiXplorer missed.
         BipElt(handler.value).name = f'{EfiXplorerPlugin.CB_SMI_PREFIX}_{handler.value:x}'
-        EFI_SMM_HANDLER_ENTRY_POINT2.set_at(handler.value)
-
         logging.getLogger('brick').info(f'Discovered an SMI handler at 0x{handler.value:x}')
         
 class SmiHandlerUnRegisterCall(CNodeExprIndirectCall):
